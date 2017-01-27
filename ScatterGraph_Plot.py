@@ -24,8 +24,9 @@ class MatplotScatWidget(QtGui.QWidget):
         self.toolbar = NavigationToolbar2QT(self.canvas, self)
         self.toolbar.setObjectName("toolbar")
         self.setStyleSheet("""
-                #toolbar{
-                    background-color: #cccccc;
+                QWidget{
+                    background-color: rgb(230, 230, 230);
+                    color: rgb(89, 89, 89);
                 }
                 """)
         self.layoutVertical = QtGui.QVBoxLayout(self)
