@@ -1,175 +1,236 @@
+import re
 from PyQt4 import QtCore, QtGui
 from StyleSet import stylish
 import datameer_requests
 from Analysis_Gui import Window
+import Welcome_Gui
 
 class WorkBookMain(QtGui.QMainWindow):
-    def __init__(self, parent=None, user = None, passwrd = None):
-        super(WorkBookMain, self).__init__(parent)
-        self.user = user
-        self.passwrd = passwrd
-        self.setGeometry(70,70,841,591)
-        stylish(self)
-        title = QtGui.QLabel()
-        title.setText("\t\tWelcome\n Please Enter WorkBook Id and select files ")
-        title.setAlignment(QtCore.Qt.AlignCenter)
-        self.setWindowTitle("Workbook")
+	def __init__(self, parent=None, user = None, passwrd = None):
+		super(WorkBookMain, self).__init__(parent)
 
-        font = QtGui.QFont()
-        palette = QtGui.QPalette()
-        # palette.setColor(QtGui.QPalette.Foreground, QtCore.Qt.white)
-        title.setPalette(palette)
-        font.setPointSize(11)
-        font.setBold(True)
-        font.setWeight(75)
-        title.setFont(font)
+		self.user = user
+		self.passwrd = passwrd
 
+		self.setGeometry(70,70,841,591)
+		stylish(self)
 
-        self.widget = QtGui.QWidget()
+		title = QtGui.QLabel()
+		title.setText("\t\tWelcome\n Please Enter WorkBook Id and select files ")
+		title.setAlignment(QtCore.Qt.AlignCenter)
+		self.setWindowTitle("Workbook")
 
-        graphicsView = QtGui.QGraphicsView()
-        graphicsView.setGeometry(QtCore.QRect(70, 70, 841, 591))
+		self.font = QtGui.QFont()
+		palette = QtGui.QPalette()
+		title.setPalette(palette)
+		self.font.setPointSize(14)
+		self.font.setBold(True)
+		self.font.setWeight(75)
+		title.setFont(self.font)
 
-        label1 = QtGui.QLabel()
-        label1.setText("WorkBook ID :")
+		self.widget = QtGui.QWidget()
 
-        self.lineEdit = QtGui.QLineEdit()
-        self.lineEdit.setGeometry(QtCore.QRect(260, 120, 491, 21))
-        self.lineEdit.setPlaceholderText("Enter WorkBook Id here and then press Enter")
-        self.lineEdit.editingFinished.connect(self.editing_finished)
-        self.lineEdit.textEdited.connect(self.text_edited)
+		graphicsView = QtGui.QGraphicsView()
+		graphicsView.setGeometry(QtCore.QRect(70, 70, 841, 591))
 
-        self.label2 = QtGui.QLabel()
-        self.label2.setText("WorkBook Name: ")
+		label1 = QtGui.QLabel()
+		label1.setText("WorkBook ID :")
 
-        self.label3= QtGui.QLabel()
+		self.label2 = QtGui.QLabel()
+		self.label2.setText("WorkBook Path: ")
 
-        label4 = QtGui.QLabel()
-        label4.setText("Choose File : ")
+		self.font_path = QtGui.QFont()
+		palette_path = QtGui.QPalette()
+		self.font_path.setFamily("Helvetica")
+		# palette.setColor(QtGui.QPalette.Foreground, QtCore.Qt.white)
 
-        self.listWidget = QtGui.QListWidget()
-        self.listWidget.setGeometry(QtCore.QRect(70, 70, 841, 391))
+		self.font_path.setPointSize(11)
+		self.font_path.setWeight(40)
 
+		self.label3= QtGui.QLabel()
+		self.label3.setPalette(palette_path)
+		self.label3.setFont(self.font_path)
 
-        self.buttonBox = QtGui.QDialogButtonBox(self)
-        self.buttonBox.setOrientation(QtCore.Qt.Horizontal)
-        self.buttonBox.setStandardButtons(QtGui.QDialogButtonBox.Ok | QtGui.QDialogButtonBox.Cancel)
-        self.buttonBox.accepted.connect(self.file_transfer)
-        self.buttonBox.rejected.connect(self.reset)
+		self.label3.setStyleSheet( '''
+		QLabel	{
+			color: #ffcc66
+			}
+			'''
+		)
 
-        self.button_group = QtGui.QButtonGroup()
+		label4 = QtGui.QLabel()
+		label4.setText("Choose File : ")
 
-        glayout = QtGui.QGridLayout()
-        glayout.addWidget( self.label2, 0,1)
-        glayout.addWidget( self.label3, 0,2)
-
-        self.vlayout = QtGui.QVBoxLayout()
-        self.vlayout.addWidget(title)
-        self.vlayout.addWidget(label1)
-        self.vlayout.addWidget(self.lineEdit)
-        self.vlayout.addLayout(glayout)
-        self.vlayout.addWidget(label4)
-        self.vlayout.addWidget(self.listWidget)
-        self.vlayout.addWidget(self.buttonBox)
-
-        graphicsView.setLayout(self.vlayout)
-        self.widget.setLayout(self.vlayout)
-        self.setCentralWidget(self.widget)
-
-        self.center()
-        self.show()
-
-    def editing_finished(self):
-        # print("Editing finished!")
-        # This signal is emitted when the Return or Enter key is pressed or the line edit loses focus.
-        id = self.lineEdit.text()
-        lst_rd=[]
-        try:
-            (path, names) = datameer_requests.get_sheets(int(id))  # 259
-            self.label3.setText(path)
-            self.listWidget.clear()
+		self.label5 = QtGui.QLabel()
+		self.label5.setText("WorkBook Name: ")
+		self.label6 = QtGui.QLabel()
+		self.label6.setFont(self.font_path)
 
 
+		self.label6.setStyleSheet( '''
+		QLabel	{
+			color: #ffcc66
+			}
+			'''
+		)
 
-            for name in names:
-                if name not in lst_rd:
-                    lst_rd.append(name)
-            # ------------------------START---------------------------------------
-                    listItem = QtGui.QListWidgetItem(name, self.listWidget)
-                    self.radio_btn = QtGui.QRadioButton("{0}".format(name))
-                    self.vlayout.addWidget(self.radio_btn)
-                    self.button_group.addButton(self.radio_btn)
-                    self.listWidget.addItem(listItem)
-                    self.listWidget.setItemWidget(listItem, self.radio_btn)
-            self.listWidget.setFocus()
-                # self.connect(self.button_group.checkedButton().text(), QtCore.SIGNAL("clicked()"), self.file_transfer)
-            #--------------------------------END------------------------------------
+		self.lineEdit = QtGui.QLineEdit()
+		self.lineEdit.setGeometry(QtCore.QRect(260, 120, 491, 21))
+		self.lineEdit.setPlaceholderText("Enter WorkBook Id here and then press Enter")
+		# self.lineEdit.clearFocus()
+		self.lineEdit.editingFinished.connect(self.editing_finished)
+		self.lineEdit.textEdited.connect(self.text_edited)
+
+		self.listWidget = QtGui.QListWidget()
+		self.listWidget.setGeometry(QtCore.QRect(70, 70, 841, 391))
+
+		self.buttonBox = QtGui.QDialogButtonBox(self)
+		self.buttonBox.setOrientation(QtCore.Qt.Horizontal)
+		self.buttonBox.setStandardButtons(QtGui.QDialogButtonBox.Ok | QtGui.QDialogButtonBox.Cancel|QtGui.QDialogButtonBox.Close)
+		self.buttonBox.accepted.connect(self.file_transfer)
+		self.buttonBox.rejected.connect(self.reset)
+
+		self.buttonBox.button(QtGui.QDialogButtonBox.Close).setText("Back")
+		self.buttonBox.button(QtGui.QDialogButtonBox.Close).clicked.connect(self.back_to_welcome)
+
+		self.button_group = QtGui.QButtonGroup()
+
+
+		glayout = QtGui.QGridLayout()
+		glayout.addWidget( self.label5, 0,0)
+		glayout.addWidget( self.label6, 1,0)
+		glayout.addWidget( self.label2, 2,0)
+		glayout.addWidget( self.label3, 3,0)
+
+		self.hlayout = QtGui.QHBoxLayout()
+		self.hlayout.addLayout(glayout)
+
+		self.vlayout = QtGui.QVBoxLayout()
+		self.vlayout.addWidget(title)
+		self.vlayout.addWidget(label1)
+		self.vlayout.addWidget(self.lineEdit)
+		self.vlayout.addLayout(self.hlayout)
+		self.vlayout.addWidget(label4)
+		self.vlayout.addWidget(self.listWidget)
+		self.vlayout.addWidget(self.buttonBox)
+
+		graphicsView.setLayout(self.vlayout)
+		self.widget.setLayout(self.vlayout)
+		self.setCentralWidget(self.widget)
+
+		self.center()
+		self.show()
+
+	def editing_finished(self):
+		# This signal is emitted when the Return or Enter key is pressed or the line edit loses focus.
+		id = self.lineEdit.text()
+		lst_rd=[]
+		self.font_radio = QtGui.QFont()
+		palette = QtGui.QPalette()
+		self.font_radio.setFamily("Helvetica")
+		self.font_radio.setPointSize(11)
+		self.font_radio.setWeight(40)
+
+
+		try:
+			(path, names) = datameer_requests.get_sheets(int(id), str(self.lineEdit.text()))
+			self.label3.setText(path)
+
+			get_file_name = re.search('^(.*/)([^/]*)$', path)
+
+			if get_file_name:
+				found_file_name = get_file_name.group(2)
+				self.label6.setText(found_file_name)
+			self.listWidget.clear()
+
+			for name in names:
+				if name not in lst_rd:
+					lst_rd.append(name)
+					listItem = QtGui.QListWidgetItem(name, self.listWidget)
+					self.radio_btn = QtGui.QRadioButton("{0}".format(name))
+					self.radio_btn.setPalette(palette)
+					self.radio_btn.setFont(self.font_radio)
+					# self.radio_btn.setChecked(True)
+					self.vlayout.addWidget(self.radio_btn)
+					self.button_group.addButton(self.radio_btn)
+					self.listWidget.addItem(listItem)
+					self.listWidget.setItemWidget(listItem, self.radio_btn)
+			self.listWidget.setFocus()
+
+
+		except ValueError:
+			if self.lineEdit.text() == "":
+				pass
+			else:
+				msg = QtGui.QMessageBox()
+				msg.setIcon(QtGui.QMessageBox.Critical)
+				msg.setWindowTitle('Error')
+				msg.setText("ID must be an integer!")
+				msg.exec_()
+
+				self.label3.setText('')
+				self.listWidget.clear()
+
+		except IOError as e :
+			self.label3.setText('')
+			self.lineEdit.clear()
+			self.listWidget.clear()
+			print "this is work"
+			msg = QtGui.QMessageBox()
+			msg.setIcon(QtGui.QMessageBox.Critical)
+			msg.setWindowTitle('Error')
+			msg.setText(str(e)+ ':' + self.lineEdit.text())
+			msg.exec_()
 
 
 
-        except ValueError:
-            if self.lineEdit.text() == "":
-                pass
-            else:
-                msg = QtGui.QMessageBox()
-                msg.setIcon(QtGui.QMessageBox.Critical)
-                msg.setWindowTitle('Error')
-                msg.setText("ID must be an integer!")
-                msg.exec_()
+	def text_edited(self):
 
-                self.label3.setText('')
-                self.listWidget.clear()
-
-        except IOError as e:
-            msg = QtGui.QMessageBox()
-            msg.setIcon(QtGui.QMessageBox.Critical)
-            msg.setWindowTitle('Error')
-            msg.setText(str(e))
-            msg.exec_()
-
-            self.label3.setText('')
-            self.listWidget.clear()
-
-    def text_edited(self):
-        # print("Text edited...")
-        # This signal is emitted whenever the text is edited.
-        self.label3.setText('')
-        self.listWidget.clear()
+		# This signal is emitted whenever the text is edited.
+		self.label3.setText('')
+		self.listWidget.clear()
 
 #
 
-    def file_transfer(self):
+	def file_transfer(self):
+
+		try:
+			name = self.button_group.checkedButton().text()
+			id = self.lineEdit.text()
+
+			wind = Window(self,id= int(id), sheet= name, user = self.user, coder = self.passwrd)
+			wind.show()
+
+		except:
+				msg = QtGui.QMessageBox()
+				msg.setIcon(QtGui.QMessageBox.Critical)
+				msg.setWindowTitle('Error')
+				msg.setText("Please enter WorkBook ID")
+				msg.exec_()
 
 
-        # for i in range(self.listWidget.count()):
-        #     listItem = self.listWidget.item(i)
-        #     if listItem.checkState() == QtCore.Qt.Checked:
-        name = self.button_group.checkedButton().text()
-        id = self.lineEdit.text()
-        wind = Window(self,id= int(id), sheet= name, user = self.user, coder = self.passwrd)
-        wind.show()
+	def reset(self):
+		self.lineEdit.clear()
+		self.label3.setText('')
+		self.listWidget.clear()
 
-            # if self.button_name.isChecked():
-            #     name = self.button_name.text()
-            #     id = self.lineEdit.text()
-            #     wind = Window(self,id= int(id), sheet= name, user = self.user, coder = self.passwrd)
-            #     wind.show()
+	def back_to_welcome(self):
+		self.close()
+		self.win = Welcome_Gui.Ui_MainWindow()
+		self.win.show()
 
-    def reset(self):
-        self.lineEdit.clear()
-        self.label3.setText('')
-        self.listWidget.clear()
 
-    def center(self):
-        qr = self.frameGeometry()
-        cp = QtGui.QDesktopWidget().availableGeometry().center()
-        qr.moveCenter(cp)
-        self.move(qr.topLeft())
+	def center(self):
+		qr = self.frameGeometry()
+		cp = QtGui.QDesktopWidget().availableGeometry().center()
+		qr.moveCenter(cp)
+		self.move(qr.topLeft())
+
 
 
 if __name__ == "__main__":
-    import sys
-    app = QtGui.QApplication(sys.argv)
-    gui = WorkBookMain()
-    sys.exit(app.exec_())
+	import sys
+	app = QtGui.QApplication(sys.argv)
+	gui = WorkBookMain()
+	sys.exit(app.exec_())
 
