@@ -6,7 +6,7 @@ from Welcome_Gui import Ui_MainWindow
 
 
 class User_Widget(QtGui.QMainWindow):
-	def __init__(self, parent=None):
+	def __init__(self, argv=None, parent=None):
 		super(User_Widget, self).__init__(parent)
 		app_icon = QtGui.QIcon()
 		app_icon.addFile('resources/analytic-icon.png', QtCore.QSize(16,16))
@@ -73,6 +73,11 @@ class User_Widget(QtGui.QMainWindow):
 		self.Orcl_PassLine = QtGui.QLineEdit()
 		self.Orcl_PassLine.setEchoMode(QtGui.QLineEdit.Password)
 		self.Orcl_PassLine.setMaxLength(20)
+		
+		if len(argv) == 4:
+			self.UserLine.setText(str(argv[1]))
+			self.PassLine.setText(str(argv[2]))
+			self.Orcl_PassLine.setText(str(argv[3]))
 
 		self.Button = QtGui.QPushButton("Sign In")
 		self.Button.setFixedWidth(60)
@@ -165,12 +170,12 @@ class User_Widget(QtGui.QMainWindow):
 
 			elif self.Orcl_PassLine.text()== "":
 				QtGui.QMessageBox.warning(
-						  self, 'Error', 'Oracle Password field is Empty')
+					  self, 'Error', 'Oracle Password field is Empty')
 
 
 			else:
 				QtGui.QMessageBox.warning(
-						  self, 'Error', 'Incorrect Datameer UserName or Password')
+					  self, 'Error', 'Incorrect UserName or Password')
 
 
 	def center(self):
@@ -179,10 +184,9 @@ class User_Widget(QtGui.QMainWindow):
 			qr.moveCenter(cp)
 			self.move(qr.topLeft())
 
-
 if __name__ == "__main__":
 	import sys
 
 	app = QtGui.QApplication(sys.argv)
-	gui = User_Widget()
+	gui = User_Widget(argv = sys.argv)
 	sys.exit(app.exec_())
