@@ -12,6 +12,7 @@ from StyleSet import stylish
 from Categorical_table_View import PandasModel
 import OracleDb
 from functools import partial
+import datameer_requests
 
 
 
@@ -28,53 +29,78 @@ class Window(QtGui.QMainWindow):
 		self.user = user
 		self.coder = coder
 		self.setWindowOpacity(0.96)
-		self.widget = QtGui.QWidget()
-		self.widget.setObjectName("MainWidget")
+		self.mainWidget = QtGui.QWidget()
+		self.mainWidget.setObjectName("MainWidget")
 
 		self.setWindowTitle("Data-Analyzer")
 		self.setWindowIcon(QtGui.QIcon("analytic-icon.png"))
-		self.pushButtonPlot = QtGui.QPushButton()
-		self.label = QtGui.QLabel()
-		self.testLabel = QtGui.QLabel()
-		self.label1 = QtGui.QLabel()
+		
+		self.numLabel = QtGui.QLabel()
+		self.nameLabel = QtGui.QLabel()
+		self.tableLabel = QtGui.QLabel()
 		self.list_layout = QtGui.QHBoxLayout()
-		self.test_layout = QtGui.QGridLayout()
+		self.label_layout = QtGui.QGridLayout()
 		self.table_layout = QtGui.QHBoxLayout()
 		self.grid_layout = QtGui.QGridLayout()
-		self.layoutVertical = QtGui.QVBoxLayout()
-		stylish(self.widget)
+		self.main_layout = QtGui.QVBoxLayout()
+		stylish(self.mainWidget)
 		self.setGeometry(50, 50, 1300, 900)
+		
+		self.numLabel.setText("Test Number")
+		self.numLabel.setAlignment(QtCore.Qt.AlignCenter)
+		
+		self.nameLabel.setText("Test Name")
+		self.nameLabel.setAlignment(QtCore.Qt.AlignCenter)
+		
+		font = QtGui.QFont()
+		font.setPointSize(14)
+		font.setBold(True)
+		font.setWeight(100)
+		font.setFamily("Helvetica")
+		palette = QtGui.QPalette()
+		palette.setColor(QtGui.QPalette.Foreground, QtCore.Qt.white)
+		self.numLabel.setPalette(palette)
+		self.numLabel.setFont(font)
+		self.nameLabel.setPalette(palette)
+		self.nameLabel.setFont(font)
+		
+		self.tableLabel.setObjectName("tableLabel")
+		self.tableLabel.setText("Categorical Data")
+		self.tableLabel.setAlignment(QtCore.Qt.AlignCenter)
+		self.tableLabel.setFont(font)
+		self.tableLabel.setPalette(palette)
 
 		extract_action = QtGui.QAction("Quit Screen", self)
 		extract_action.setShortcut("Ctrl+Q")
 		extract_action.setStatusTip("Quit 'Ctrl+Q'")
 		extract_action.triggered.connect(close_application)
 
-		self.listWidget = QtGui.QListWidget()
-		self.listWidget.setGeometry(50, 100, 50, 600)
-		self.listWidget.resize(2, 6)
-		self.listWidget.setObjectName("mylist")
+		self.testListWidget = QtGui.QListWidget()
+		self.testListWidget.setGeometry(50, 100, 50, 600)
+		self.testListWidget.resize(2, 6)
+		self.testListWidget.setObjectName("testNumberList")
+		self.testListWidget.itemClicked.connect(self.onTestNumSelected)
 
-		self.oraclelistWidget = QtGui.QListWidget()
-		self.oraclelistWidget.resize(2, 6)
-		self.oraclelistWidget.setObjectName("myOracle")
+		self.nameListWidget = QtGui.QListWidget()
+		self.nameListWidget.resize(2, 6)
+		self.nameListWidget.setObjectName("testNameList")
 
 		self.tableWidget = QtGui.QTableView()
 		self.tableWidget.setGeometry(1000, 100, 100, 600)
 		self.tableWidget.horizontalHeader().setStretchLastSection(True)
 		self.tableWidget.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarAsNeeded)
-		self.tableWidget.setObjectName("mytable")
+		self.tableWidget.setObjectName("abbrvTable")
 		self.tableWidget.setLineWidth(50)
 		self.tableWidget.setShowGrid(True)
 
 		font = QtGui.QFont()
-		palette = QtGui.QPalette()
-		self.tableWidget.setPalette(palette)
 		font.setPointSize(11)
 		font.setWeight(10)
+		palette = QtGui.QPalette()
+		self.tableWidget.setPalette(palette)
 		self.tableWidget.setFont(font)
-		self.listWidget.setFont(font)
-		self.oraclelistWidget.setFont(font)
+		self.testListWidget.setFont(font)
+		self.nameListWidget.setFont(font)
 
 		font_header = QtGui.QFont()
 		palette_header = QtGui.QPalette()
@@ -88,165 +114,145 @@ class Window(QtGui.QMainWindow):
 		self.tableWidget.horizontalHeader().setFont(font_header)
 		# self.tableWidget.setAlternatingRowColors(True)
 
-		self.read(self.listWidget)
-
-		self.f_alph = None
-
-		self.statusBar()
-		# main_menu = self.menuBar()
-		# file_menu = main_menu.addMenu("&Quit")
-		# file_menu.addAction(extract_action)
-
-		self.plot_scat = MatplotScatWidget()
-
-		self.center()
-		self.home()
-		self.setCentralWidget(self.widget)
-		self.show()
-
-	def home(self):
-		self.pushButtonPlot.setObjectName("pushButton")
-		self.pushButtonPlot.setText("Get Categorical Graph")
-		self.pushButtonPlot.setStyleSheet( '''
+		
+		self.barPlotButton = QtGui.QPushButton()
+		self.barPlotButton.setObjectName("barPlotButton")
+		self.barPlotButton.setText("Get Categorical Graph")
+		self.barPlotButton.setStyleSheet( '''
 		QPushButton	{
 			color: #ffcc66
 			}
 			'''
 		)
-		self.pushButtonPlot.move(50, 50)
-		self.pushButtonPlot.setFixedSize(150, 50)
-
-		self.label.setText("Test Numbers")
-		self.label.setAlignment(QtCore.Qt.AlignCenter)
-
-		self.testLabel.setText("Test Name")
-		self.testLabel.setAlignment(QtCore.Qt.AlignCenter)
-
-		font = QtGui.QFont()
-		palette = QtGui.QPalette()
-		palette.setColor(QtGui.QPalette.Foreground, QtCore.Qt.white)
-		self.label.setPalette(palette)
-		font.setPointSize(14)
-		font.setBold(True)
-		font.setWeight(100)
-		font.setFamily("Helvetica")
-		self.label.setFont(font)
-		self.testLabel.setPalette(palette)
-		self.testLabel.setFont(font)
-
-		self.label1.setObjectName("label1")
-		self.label1.setText("Categorical Data")
-		self.label1.setAlignment(QtCore.Qt.AlignCenter)
-		self.label1.setFont(font)
-		self.label1.setPalette(palette)
-
+		self.barPlotButton.move(50, 50)
+		self.barPlotButton.setFixedSize(150, 50)
+		self.barPlotButton.clicked.connect(self.onBarPlotButtonClicked)
+		
 		self.list_layout.addStretch()
-		self.list_layout.addWidget(self.listWidget)
-		self.list_layout.addWidget(self.oraclelistWidget)
+		self.list_layout.addWidget(self.testListWidget)
+		self.list_layout.addWidget(self.nameListWidget)
 		self.list_layout.addStretch()
 
-		self.test_layout.addWidget(self.label, 0,1)
-		self.test_layout.addWidget(self.testLabel, 0,2)
+		self.label_layout.addWidget(self.numLabel, 0,1)
+		self.label_layout.addWidget(self.nameLabel, 0,2)
 
 		self.table_layout.addWidget(self.tableWidget)
-#         self.table_layout.addStretch()
+		# self.table_layout.addStretch()
 
-		self.grid_layout.addLayout(self.test_layout, 0,1)
-		self.grid_layout.addWidget(self.label1, 0, 4)
+		self.grid_layout.addLayout(self.label_layout, 0,1)
+		self.grid_layout.addWidget(self.tableLabel, 0, 4)
 		self.grid_layout.addLayout(self.list_layout, 1, 1)
-		self.grid_layout.addWidget(self.pushButtonPlot, 1, 3)
+		self.grid_layout.addWidget(self.barPlotButton, 1, 3)
 		self.grid_layout.addLayout(self.table_layout, 1, 4)
 
-		self.layoutVertical.addLayout(self.grid_layout)
-		self.pushButtonPlot.clicked.connect(self.on_pushbutton_clicked)
-		self.widget.setLayout(self.layoutVertical)
-
-		self.layoutVertical.addWidget(self.plot_scat)
-
-	@pyqtSlot("QModelIndex")
-	def my_list(self, index):
-		self.listWidget.setEnabled(False)
-		self.layoutVertical.removeWidget(self.plot_scat)
+		# scatter plot
 		self.plot_scat = MatplotScatWidget()
-		self.layoutVertical.addWidget(self.plot_scat)
-		self.read(tx=index.text())
+		
+		self.main_layout.addLayout(self.grid_layout)
+		self.main_layout.addWidget(self.plot_scat)
+		self.mainWidget.setLayout(self.main_layout)
+		
+		# initial test codes and names
+		self.loadTest()
+		
+		# main_menu = self.menuBar()
+		# file_menu = main_menu.addMenu("&Quit")
+		# file_menu.addAction(extract_action)
+		
+		self.statusBar()
+		self.center()
+		self.setCentralWidget(self.mainWidget)
+		self.show()
+
+		
+	def loadTest(self):
+		# load data
+		txt = datameer_requests.get_data(self.id, self.sheet)
+		df = pd.read_csv(StringIO(txt), header=0, dtype={'test_number':str,'result':str,'Count':np.int64})
+		test_numbers = df.test_number.unique().tolist()
+		
+		# keep data for efficiency
+		self.data = df
+		
+		lst = OracleDb.testName_fetcher(test_number = test_numbers)
+		self.nameListWidget.clear()
+		for i in lst:
+			self.nameListWidget.addItem(str(i))
+			
+		for i in test_numbers:
+			self.testListWidget.addItem(str(i))
 
 
-	def read(self, list_widget=None, tx=0):
-		requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
-		r = requests.get("https://datameer.labcorp.com:8443/rest/data/workbook/{0}/{1}/download".format(self.id, self.sheet), auth=(self.user, self.coder), verify=False)
-		df = pd.read_csv(StringIO(r.text))
-		df_str = pd.read_table(StringIO(r.text), sep=',', names=['test_number','result','Count'])
-		test_val = df_str.test_number.unique().tolist()
-		OracleDb.testName_fetcher(test_number = test_val, orcllw=self.oraclelistWidget)
-		test_val.pop(0)
-		if list_widget is not None:
-			self.create_test_list(test_val, list_widget)
-		else:
-			self.generate_num_alph(df=df, tx=tx)
-			QtCore.QTimer.singleShot(0.01, partial(self.listWidget.setEnabled, True))
+	def onTestNumSelected(self, index):
+		self.testListWidget.setEnabled(False)
+		test_number = self.testListWidget.currentItem().text()
+		self.main_layout.removeWidget(self.plot_scat)
+		self.plot_scat = MatplotScatWidget()
+		self.main_layout.addWidget(self.plot_scat)
+		
+		# refresh scatter plot and alpha value table
+		self.generate_numeric_alpha(tx=test_number)
 
-	def generate_num_alph(self, df, tx):
-		df1 = pd.DataFrame(df['result'])
-		df2 = pd.to_numeric(df1['result'], errors='coerce')
-		df1['result'] = df2
-		# number list
+		
+	def generate_numeric_alpha(self, tx):
+	
+		df = self.data
+		
+		# Coerce alpha result to NaN
+		df1 = pd.DataFrame(pd.to_numeric(df['result'], errors='coerce'))
+		
+		# Get numeric list
 		t = df.ix[df1.dropna().index.values]
 		t['result'] = t.result.astype('float')
 
-		# alpha list
-
+		# Get alpha list
 		index = df1['result'].index[df1['result'].apply(np.isnan)]
-
 		z = df.ix[index]
 
-		# Selecting data according to test numbers
-		q = t[t['test_number'] == float(tx)].groupby('result')['Count'].sum()
-		plot_scat_val = pd.DataFrame(q, columns=['Count'])
-		plot_bar_val = z[z['test_number'] == float(tx)][:20]
+		# Selecting data according to test number
+		q = t[t['test_number'] == tx].groupby('result')['Count'].sum()
+		numeric_values = q.to_frame().reset_index()
+		alpha_values = z[z['test_number'] == tx].sort_values(by=['Count'],ascending=False)
 
-		self.plot_scat.print_g1(fnum=plot_scat_val)
+		# Draw scatter plot
+		self.plot_scat.print_g1(fnum=numeric_values)
 
-		# Sending results in dbconnect.py and fetching description from database
-		describe = OracleDb.description_fetcher(plot_bar_val=plot_bar_val['result'])
+		# Fetching description of alpha values from database
+		desc = OracleDb.description_fetcher(abbrv_list=alpha_values['result'])
 
 		# Below line will remove the false positive warning
 		pd.options.mode.chained_assignment = None  # default='warn'
 
-		# _____Joining two dataFrames_____
-		descr= pd.DataFrame({'description':[i for i in describe]} , index = plot_bar_val.index)
-
-		join_df = plot_bar_val.join(descr)
-
+		# Joining description
+		desc_df = pd.DataFrame({'description':desc}, index = alpha_values.index)
+		join_df = alpha_values.join(desc_df)
+		
+		# Display table
 		model = PandasModel(join_df.ix[:, 1:4])
 		# self.tableWidget.reset()
-		self.draw_table(model)
-
-
-		self.f_alph = plot_bar_val
-
-	def create_test_list(self, read_test_num, list_widget):
-		for i in read_test_num:
-			list_widget.addItem(str(i))
-
-		self.listWidget.itemClicked.connect(self.my_list)
-
-	def draw_table(self, model):
 		self.tableWidget.setModel(model)
 
+		# keep alpha values for bar chart
+		self.data_alpha = alpha_values
+		
+		QtCore.QTimer.singleShot(0.01, partial(self.mySelectListItem))
+
+	def mySelectListItem(self):
+		self.testListWidget.setEnabled(True)
+		self.nameListWidget.setCurrentRow(self.testListWidget.currentRow())
+		
 	def center(self):
 		qr = self.frameGeometry()
 		cp = QtGui.QDesktopWidget().availableGeometry().center()
 		qr.moveCenter(cp)
 		self.move(qr.topLeft())
 
-	def on_pushbutton_clicked(self):
-		plot_bar = MatplotBarWidget()
-		plot_bar.setWindowTitle("Categorical Graph")
-		plot_bar.setWindowIcon(QtGui.QIcon("icon.png"))
-		plot_bar.print_g2(self.f_alph)
-		plot_bar.show()
-
+	def onBarPlotButtonClicked(self):
+		bar_plot = MatplotBarWidget()
+		bar_plot.setWindowTitle("Categorical Graph")
+		bar_plot.setWindowIcon(QtGui.QIcon("icon.png"))
+		bar_plot.print_g2(self.data_alpha[:10]) # draw top 10 bars only
+		bar_plot.show()
 
 def main():
 	app = QtGui.QApplication(sys.argv)

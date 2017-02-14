@@ -36,7 +36,7 @@ class MatplotScatWidget(QtGui.QWidget):
     def print_g1(self, fnum=None):
         plt.rcParams.update({'figure.max_open_warning': 0})
         plt.clf()
-        plt.scatter(fnum.index, fnum.Count,
+        plt.scatter(fnum.result, fnum.Count,
                     color='#ff944d', s=30)
 
         plt.xlabel("Result")

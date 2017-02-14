@@ -16,7 +16,7 @@ class WorkBookMain(QtGui.QMainWindow):
 		stylish(self)
 
 		title = QtGui.QLabel()
-		title.setText("\t\tWelcome\n Please Enter WorkBook Id and select files ")
+		title.setText("\t\tWelcome\n Please Enter WorkBook Id and select sheet")
 		title.setAlignment(QtCore.Qt.AlignCenter)
 		self.setWindowTitle("Workbook")
 
@@ -59,7 +59,7 @@ class WorkBookMain(QtGui.QMainWindow):
 		)
 
 		label4 = QtGui.QLabel()
-		label4.setText("Choose File : ")
+		label4.setText("Choose sheet: ")
 
 		self.label5 = QtGui.QLabel()
 		self.label5.setText("WorkBook Name: ")
@@ -87,7 +87,7 @@ class WorkBookMain(QtGui.QMainWindow):
 		self.buttonBox = QtGui.QDialogButtonBox(self)
 		self.buttonBox.setOrientation(QtCore.Qt.Horizontal)
 		self.buttonBox.setStandardButtons(QtGui.QDialogButtonBox.Ok | QtGui.QDialogButtonBox.Cancel|QtGui.QDialogButtonBox.Close)
-		self.buttonBox.accepted.connect(self.file_transfer)
+		self.buttonBox.accepted.connect(self.go_analysis)
 		self.buttonBox.rejected.connect(self.reset)
 
 		self.buttonBox.button(QtGui.QDialogButtonBox.Close).setText("Back")
@@ -124,7 +124,6 @@ class WorkBookMain(QtGui.QMainWindow):
 	def editing_finished(self):
 		# This signal is emitted when the Return or Enter key is pressed or the line edit loses focus.
 		id = self.lineEdit.text()
-		lst_rd=[]
 		self.font_radio = QtGui.QFont()
 		palette = QtGui.QPalette()
 		self.font_radio.setFamily("Helvetica")
@@ -133,7 +132,7 @@ class WorkBookMain(QtGui.QMainWindow):
 
 
 		try:
-			(path, names) = datameer_requests.get_sheets(int(id), str(self.lineEdit.text()))
+			(path, names) = datameer_requests.get_sheets(int(id)) 
 			self.label3.setText(path)
 
 			get_file_name = re.search('^(.*/)([^/]*)$', path)
@@ -144,17 +143,15 @@ class WorkBookMain(QtGui.QMainWindow):
 			self.listWidget.clear()
 
 			for name in names:
-				if name not in lst_rd:
-					lst_rd.append(name)
-					listItem = QtGui.QListWidgetItem(name, self.listWidget)
-					self.radio_btn = QtGui.QRadioButton("{0}".format(name))
-					self.radio_btn.setPalette(palette)
-					self.radio_btn.setFont(self.font_radio)
-					# self.radio_btn.setChecked(True)
-					self.vlayout.addWidget(self.radio_btn)
-					self.button_group.addButton(self.radio_btn)
-					self.listWidget.addItem(listItem)
-					self.listWidget.setItemWidget(listItem, self.radio_btn)
+				listItem = QtGui.QListWidgetItem(name, self.listWidget)
+				self.radio_btn = QtGui.QRadioButton("{0}".format(name))
+				self.radio_btn.setPalette(palette)
+				self.radio_btn.setFont(self.font_radio)
+				# self.radio_btn.setChecked(True)
+				self.vlayout.addWidget(self.radio_btn)
+				self.button_group.addButton(self.radio_btn)
+				self.listWidget.addItem(listItem)
+				self.listWidget.setItemWidget(listItem, self.radio_btn)
 			self.listWidget.setFocus()
 
 
@@ -169,17 +166,18 @@ class WorkBookMain(QtGui.QMainWindow):
 				msg.exec_()
 
 				self.label3.setText('')
+				self.label6.setText('')
 				self.listWidget.clear()
 
 		except IOError as e :
 			self.label3.setText('')
+			self.label6.setText('')
 			self.lineEdit.clear()
 			self.listWidget.clear()
-			print "this is work"
 			msg = QtGui.QMessageBox()
 			msg.setIcon(QtGui.QMessageBox.Critical)
 			msg.setWindowTitle('Error')
-			msg.setText(str(e)+ ':' + self.lineEdit.text())
+			msg.setText(str(e))
 			msg.exec_()
 
 
@@ -188,35 +186,40 @@ class WorkBookMain(QtGui.QMainWindow):
 
 		# This signal is emitted whenever the text is edited.
 		self.label3.setText('')
+		self.label6.setText('')
 		self.listWidget.clear()
 
 #
 
-	def file_transfer(self):
+	def go_analysis(self):
 
 		try:
+			if self.button_group.checkedButton() == None:
+				raise IOError('Please select a sheet!')
+				
 			name = self.button_group.checkedButton().text()
 			id = self.lineEdit.text()
 
 			wind = Window(self,id= int(id), sheet= name, user = self.user, coder = self.passwrd)
 			wind.show()
 
-		except:
-				msg = QtGui.QMessageBox()
-				msg.setIcon(QtGui.QMessageBox.Critical)
-				msg.setWindowTitle('Error')
-				msg.setText("Please enter WorkBook ID")
-				msg.exec_()
+		except IOError as e:
+			msg = QtGui.QMessageBox()
+			msg.setIcon(QtGui.QMessageBox.Critical)
+			msg.setWindowTitle('Error')
+			msg.setText(str(e))
+			msg.exec_()
 
 
 	def reset(self):
 		self.lineEdit.clear()
 		self.label3.setText('')
+		self.label6.setText('')
 		self.listWidget.clear()
 
 	def back_to_welcome(self):
 		self.close()
-		self.win = Welcome_Gui.Ui_MainWindow()
+		self.win = Welcome_Gui.Ui_MainWindow(user=self.user,passwrd=self.passwrd)
 		self.win.show()
 
 

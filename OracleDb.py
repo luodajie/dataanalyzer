@@ -3,45 +3,61 @@ import pandas as pd
 
 user = None
 passwrd = None
-# lst_describe = []
-def testName_fetcher(test_number= None, orcllw=None):
-    # 'DWoct25$'
-    con = cx_Oracle.connect(user=user, password= passwrd, dsn='rtxa1-scan.labcorp.com:1521/lcadwp1.labcorp.com')
-    cur = con.cursor()
-    lst = []
 
-    for i in test_number:
+def testName_fetcher(test_number=None):
+	
+	con = cx_Oracle.connect(user=user, password= passwrd, dsn='rtxa1-scan.labcorp.com:1521/lcadwp1.labcorp.com')
+	cur = con.cursor()
+	lst = []
 
-        cur.execute("select test_name from proddb2.trllr38_tst_master where test_number = '{0}' ".format(i))
-        for result in cur:
-#       # removing () and , from the data
-            result = ' '.join(result)
-            lst.append(result)
+	for i in test_number:
+		cur.execute("select test_name from proddb2.trllr38_tst_master where test_number = '{0}' ".format(i))
+		result = cur.fetchone()
+		if result is not None:
+			# removing () and , from the data
+			lst.append(''.join(result))
+		else:
+			lst.append("None")
 
+	cur.close()
+	con.close()
+	
+	return lst
 
-    df = pd.DataFrame({'test_name':lst})
+def description_fetcher(abbrv_list):
 
-    orcllw.clear()
-    for index, row in df.iterrows():
-            orcllw.addItem(str(row['test_name']))
-           
-        
-    cur.close()
-    con.close()
+	con = cx_Oracle.connect(user=user, password= passwrd, dsn='rtxa1-scan.labcorp.com:1521/lcadwp1.labcorp.com')
+	cur = con.cursor()
+	lst = []
 
-def description_fetcher(plot_bar_val):
+	for val in abbrv_list:
+		cur.execute("select expanded_text from luod.abbrv where abbrv = '{0}' ".format(val))
+		data_tuple = cur.fetchone() #fetching single data from cursor
+		if data_tuple is not None and len(data_tuple) > 0:
+			lst.append(str(data_tuple[0]))
+		else: 
+			lst.append("None") 
 
-    con = cx_Oracle.connect(user=user, password= passwrd, dsn='rtxa1-scan.labcorp.com:1521/lcadwp1.labcorp.com')
-    cur = con.cursor()
-    lst = []
+	cur.close()
+	con.close()
+	
+	return lst
 
-    for val in plot_bar_val:
-        cur.execute("select expanded_text from luod.abbrv where abbrv = '{0}' ".format(val))
-        data_tuple = cur.fetchone() #fetching single data from cursor
-        lst.append(data_tuple) if data_tuple else lst.append(" None ") # Single line ternary expression for if-else.
-
-    return lst
-
-        
-    cur.close()
-    con.close()
+def check_dbCredentials(userid, password):
+	try:
+		con = cx_Oracle.connect(userid, password, dsn='rtxa1-scan.labcorp.com:1521/lcadwp1.labcorp.com')
+		global user
+		global passwrd
+		user = userid
+		passwrd = password
+	except cx_Oracle.DatabaseError as e:
+		error, = e.args
+		if error.code == 1017:
+			msgBox = QtGui.QMessageBox()
+			msgBox.setText("Please Enter Correct Oracle Password")
+			msgBox.show()
+		else:
+			print('Database connection error: {0}'.format(e))
+			raise 
+	except:
+		raise

@@ -1,6 +1,7 @@
 from PyQt4 import QtCore, QtGui
 from StyleSet import form
 import datameer_requests
+import OracleDb
 from Welcome_Gui import Ui_MainWindow
 
 
@@ -152,7 +153,7 @@ class User_Widget(QtGui.QMainWindow):
 	def authenticate_user(self):
 		try:
 			datameer_requests.get_user_info(str(self.UserLine.text()), str(self.PassLine.text()))
-			datameer_requests.check_dbCredentials(str(self.UserLine.text()), str(self.Orcl_PassLine.text()))
+			OracleDb.check_dbCredentials(str(self.UserLine.text()), str(self.Orcl_PassLine.text()))
 			self.close()
 
 			self.wind = Ui_MainWindow(user= str(self.UserLine.text()), passwrd = str(self.PassLine.text()),
