@@ -88,7 +88,7 @@ class Window(QtGui.QMainWindow):
 		self.tableWidget = QtGui.QTableView()
 		self.tableWidget.setGeometry(1000, 100, 100, 600)
 		self.tableWidget.horizontalHeader().setStretchLastSection(True)
-		self.tableWidget.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarAsNeeded)
+		self.tableWidget.horizontalHeader().setDefaultAlignment(QtCore.Qt.AlignHCenter)
 		self.tableWidget.setObjectName("abbrvTable")
 		self.tableWidget.setLineWidth(50)
 		self.tableWidget.setShowGrid(True)
@@ -106,7 +106,7 @@ class Window(QtGui.QMainWindow):
 		palette_header = QtGui.QPalette()
 		palette.setColor(QtGui.QPalette.Foreground, QtCore.Qt.black)
 		self.tableWidget.setPalette(palette_header)
-		font_header.setPointSize(11)
+		font_header.setPointSize(12)
 		font_header.setWeight(30)
 		stylesheet = "QHeaderView::section{Background-color:rgb(128, 128, 128);\
 								   border-radius:14px; color: rgb(230, 230, 230);} * { gridline-color: gray }"
@@ -225,13 +225,19 @@ class Window(QtGui.QMainWindow):
 
 		# Joining description
 		desc_df = pd.DataFrame({'description':desc}, index = alpha_values.index)
+
+
+
+		wow = pd.DataFrame.to_dict(desc_df)
+		print wow
+
+		print wow['description']
 		join_df = alpha_values.join(desc_df)
 		
 		# Display table
 		model = PandasModel(join_df.ix[:, 1:4])
 		# self.tableWidget.reset()
 		self.tableWidget.setModel(model)
-
 		# keep alpha values for bar chart
 		self.data_alpha = alpha_values
 		
@@ -240,6 +246,11 @@ class Window(QtGui.QMainWindow):
 	def mySelectListItem(self):
 		self.testListWidget.setEnabled(True)
 		self.nameListWidget.setCurrentRow(self.testListWidget.currentRow())
+
+		testnumber_item = self.testListWidget.currentItem()
+		testname_item = self.nameListWidget.currentItem()
+		self.testListWidget.scrollToItem(testnumber_item, QtGui.QAbstractItemView.PositionAtTop)
+		self.nameListWidget.scrollToItem(testname_item, QtGui.QAbstractItemView.PositionAtTop)
 		
 	def center(self):
 		qr = self.frameGeometry()
@@ -253,6 +264,8 @@ class Window(QtGui.QMainWindow):
 		bar_plot.setWindowIcon(QtGui.QIcon("icon.png"))
 		bar_plot.print_g2(self.data_alpha[:10]) # draw top 10 bars only
 		bar_plot.show()
+
+
 
 def main():
 	app = QtGui.QApplication(sys.argv)
