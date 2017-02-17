@@ -1,4 +1,5 @@
 import cx_Oracle
+from PyQt4 import QtGui
 import pandas as pd
 
 user = None
@@ -31,12 +32,16 @@ def description_fetcher(abbrv_list):
 	lst = []
 
 	for val in abbrv_list:
-		cur.execute("select expanded_text from luod.abbrv where abbrv = '{0}' ".format(val))
+		# --------CHANGES MADE HERE-------------
+		myVal = {'vals':str(val)}
+		query = "select expanded_text from luod.abbrv where abbrv = :vals "
+		cur.execute(query, myVal)
+		#---------END ----------------------
 		data_tuple = cur.fetchone() #fetching single data from cursor
 		if data_tuple is not None and len(data_tuple) > 0:
 			lst.append(str(data_tuple[0]))
-		else: 
-			lst.append("None") 
+		else:
+			lst.append("None")
 
 	cur.close()
 	con.close()
