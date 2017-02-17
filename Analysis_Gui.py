@@ -225,13 +225,6 @@ class Window(QtGui.QMainWindow):
 
 		# Joining description
 		desc_df = pd.DataFrame({'description':desc}, index = alpha_values.index)
-
-
-
-		wow = pd.DataFrame.to_dict(desc_df)
-		print wow
-
-		print wow['description']
 		join_df = alpha_values.join(desc_df)
 		
 		# Display table
