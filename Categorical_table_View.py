@@ -18,7 +18,7 @@ class PandasModel(QtCore.QAbstractTableModel):
 			if role == QtCore.Qt.DisplayRole:
 				return str(self._data.values[index.row()][index.column()])
 			if role == Qt.ToolTipRole:
-				return str(self._data.values[index.row()])
+				return str(self._data.values[index.row()][index.column()])
 		return None
 
 	def headerData(self, col, orientation, role):
