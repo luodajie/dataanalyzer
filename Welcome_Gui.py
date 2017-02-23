@@ -2,6 +2,7 @@ from PyQt4 import QtCore, QtGui
 import sys
 from StyleSet import stylish
 from WorkBook_Selector import WorkBookMain
+import data_migration_GUI
 
 try:
 	_fromUtf8 = QtCore.QString.fromUtf8
@@ -48,7 +49,7 @@ class Ui_MainWindow(QtGui.QMainWindow):
 		self.pushButton = QtGui.QPushButton(self.centralwidget)
 		self.pushButton.setGeometry(QtCore.QRect(230, 330, 111, 31))
 		self.pushButton.setObjectName(_fromUtf8("pushButton"))
-		# self.pushButton.clicked.connect(self.OracleOpen)
+		self.pushButton.clicked.connect(self.OracleOpen)
 
 		self.pushButton_2 = QtGui.QPushButton(self.centralwidget)
 		self.pushButton_2.setGeometry(QtCore.QRect(430, 330, 140, 31))
@@ -74,7 +75,7 @@ class Ui_MainWindow(QtGui.QMainWindow):
 		self.action_DataBase = QtGui.QAction(QtGui.QIcon('resources/database.png'), "Database", self)
 		self.action_DataBase.setObjectName(_fromUtf8("action_DataBase"))
 		self.action_DataBase.setShortcut("Ctrl+D")
-		# self.action_DataBase.triggered.connect(self.OracleOpen)
+		self.action_DataBase.triggered.connect(self.OracleOpen)
 
 		self.action_Graphs = QtGui.QAction(QtGui.QIcon('resources/graph.ico'), "Graph", self)
 		self.action_Graphs.setObjectName(_fromUtf8("action_Graphs"))
@@ -103,8 +104,8 @@ class Ui_MainWindow(QtGui.QMainWindow):
 		self.setWindowIcon(QtGui.QIcon("resources/analytic-icon.png"))
 		self.label.setText(_translate("MainWindow", "Welcome ", None))
 		self.label_2.setText(_translate("MainWindow", "Which task would you like to perform ?", None))
-		self.pushButton.setText(_translate("MainWindow", "Positng in Oracle", None))
-		self.pushButton_2.setText(_translate("MainWindow", "WorkBook and Graphs", None))
+		self.pushButton.setText(_translate("MainWindow", "Trends to Oracle", None))
+		self.pushButton_2.setText(_translate("MainWindow", "Result Graph", None))
 		self.label_3.setText(_translate("MainWindow", "OR", None))
 		self.menu_File.setTitle(_translate("MainWindow", "&File", None))
 		self.toolBar.setWindowTitle(_translate("MainWindow", "toolBar", None))
@@ -120,12 +121,12 @@ class Ui_MainWindow(QtGui.QMainWindow):
 		self.wind = WorkBookMain(user= user, passwrd = passwrd)
 		self.wind.show()
 
-	# def OracleOpen(self, user = None, oracle_pass = None):
-	# 	user = self.user
-	# 	oracle_pass = self.oracle_pass
-	# 	self.close()
-	#
-	# 	self.sec = SqlServer_to_Oracle(user=user, oracle_pass=oracle_pass)
+	def OracleOpen(self, user = None, oracle_pass = None):
+		user = self.user
+		oracle_pass = self.oracle_pass
+		self.close()
+	
+		self.sec = data_migration_GUI.Second(user=user, oracle_pass=oracle_pass)
 
 
 if __name__ == "__main__":

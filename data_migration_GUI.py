@@ -70,6 +70,11 @@ class Second(QtGui.QMainWindow):
 		self.lineEdit.setObjectName(_fromUtf8("lineEdit"))
 		self.formLayout.setWidget(1, QtGui.QFormLayout.FieldRole, self.lineEdit)
 
+		self.label_2 = QtGui.QLabel(self.formLayoutWidget)
+		self.label_2.setAlignment(QtCore.Qt.AlignCenter)
+		self.label_2.setObjectName(_fromUtf8("label_2"))
+		self.formLayout.setWidget(2, QtGui.QFormLayout.LabelRole, self.label_2)
+
 		self.textEdit = QtGui.QTextEdit(self.formLayoutWidget)
 		self.textEdit.setFrameShape(QtGui.QFrame.Panel)
 		self.textEdit.setFrameShadow(QtGui.QFrame.Sunken)
@@ -78,7 +83,6 @@ class Second(QtGui.QMainWindow):
 		self.textEdit.setTabChangesFocus(True)
 		self.textEdit.setObjectName(_fromUtf8("textEdit"))
 		self.formLayout.setWidget(2, QtGui.QFormLayout.FieldRole, self.textEdit)
-
 
 		self.label_3 = QtGui.QLabel(self.formLayoutWidget)
 		self.label_3.setAlignment(QtCore.Qt.AlignCenter)
@@ -99,12 +103,7 @@ class Second(QtGui.QMainWindow):
 		self.lineEdit_3.setObjectName(_fromUtf8("lineEdit_3"))
 		self.formLayout.setWidget(4, QtGui.QFormLayout.FieldRole, self.lineEdit_3)
 
-		self.label_2 = QtGui.QLabel(self.formLayoutWidget)
-		self.label_2.setAlignment(QtCore.Qt.AlignCenter)
-		self.label_2.setObjectName(_fromUtf8("label_2"))
-		self.formLayout.setWidget(2, QtGui.QFormLayout.LabelRole, self.label_2)
-
-
+		
 		self.buttonBox = QtGui.QDialogButtonBox(self.centralwidget)
 		self.buttonBox.setGeometry(QtCore.QRect(230, 430, 156, 23))
 		self.buttonBox.setStandardButtons(QtGui.QDialogButtonBox.Cancel|QtGui.QDialogButtonBox.Save|QtGui.QDialogButtonBox.Close)
@@ -133,8 +132,8 @@ class Second(QtGui.QMainWindow):
 		self.label1.setText(_translate("MainWindow", "Migration SQL Server ---> Oracle ", None))
 		self.label.setText(_translate("MainWindow", "Request No.:", None))
 		self.label_2.setText(_translate("MainWindow", "Test Number:\n \n ( Please insert\n Comma Seperated \nValues )", None))
-		self.lineEdit_2.setPlaceholderText(_translate("MainWindow", "YYYY-MM-DD", None))
 		self.lineEdit.setPlaceholderText(_translate("MainWindow", "Enter Request Number here.....", None))
+		self.lineEdit_2.setPlaceholderText(_translate("MainWindow", "YYYY-MM-DD", None))
 		self.lineEdit_3.setPlaceholderText(_translate("MainWindow", "YYYY-MM-DD", None))
 		self.label_3.setText(_translate("MainWindow", "Start Date:", None))
 		self.label_4.setText(_translate("MainWindow", "End Date:", None))
