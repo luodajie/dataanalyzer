@@ -113,20 +113,16 @@ class Ui_MainWindow(QtGui.QMainWindow):
 		self.action_Graphs.setText(_translate("MainWindow", "&Graphs", None))
 		self.actionQuit.setText(_translate("MainWindow", "&Quit", None))
 
-	def workBookOpen(self, user=None, passwrd = None):
-		user = self.user
-		passwrd = self.passwrd
+	def workBookOpen(self):
 		self.close()
 
-		self.wind = WorkBookMain(user= user, passwrd = passwrd)
+		self.wind = WorkBookMain(user= self.user, passwrd = self.passwrd, oracle_pass=self.oracle_pass)
 		self.wind.show()
 
-	def OracleOpen(self, user = None, oracle_pass = None):
-		user = self.user
-		oracle_pass = self.oracle_pass
+	def OracleOpen(self):
 		self.close()
 	
-		self.sec = data_migration_GUI.Second(user=user, oracle_pass=oracle_pass)
+		self.sec = data_migration_GUI.Second(user=self.user, passwrd = self.passwrd, oracle_pass=self.oracle_pass)
 
 
 if __name__ == "__main__":

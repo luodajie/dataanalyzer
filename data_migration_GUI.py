@@ -8,6 +8,7 @@
 
 from PyQt4 import QtCore, QtGui
 from StyleSet import stylish
+from time import sleep
 import Welcome_Gui
 import SQL_Server_to_Oracle
 
@@ -28,10 +29,11 @@ except AttributeError:
 		return QtGui.QApplication.translate(context, text, disambig)
 
 class Second(QtGui.QMainWindow):
-	def __init__(self, parent=None, user=None, oracle_pass=None):
+	def __init__(self, parent=None, user=None, passwrd=None, oracle_pass=None):
 		super(Second, self).__init__(parent)
 
 		self.user = user
+		self.passwrd = passwrd
 		self.oracle_pass = oracle_pass
 
 
@@ -109,7 +111,7 @@ class Second(QtGui.QMainWindow):
 		self.buttonBox.setStandardButtons(QtGui.QDialogButtonBox.Cancel|QtGui.QDialogButtonBox.Save|QtGui.QDialogButtonBox.Close)
 		self.buttonBox.setCenterButtons(False)
 		self.buttonBox.setObjectName(_fromUtf8("buttonBox"))
-		self.buttonBox.accepted.connect(self.send_userInput_to_database)
+		self.buttonBox.accepted.connect(self.validate_form)
 		self.buttonBox.rejected.connect(self.reset)
 
 		self.buttonBox.button(QtGui.QDialogButtonBox.Close).setText("Back")
@@ -133,8 +135,8 @@ class Second(QtGui.QMainWindow):
 		self.label.setText(_translate("MainWindow", "Request No.:", None))
 		self.label_2.setText(_translate("MainWindow", "Test Number:\n \n ( Please insert\n Comma Seperated \nValues )", None))
 		self.lineEdit.setPlaceholderText(_translate("MainWindow", "Enter Request Number here.....", None))
-		self.lineEdit_2.setPlaceholderText(_translate("MainWindow", "YYYY-MM-DD", None))
-		self.lineEdit_3.setPlaceholderText(_translate("MainWindow", "YYYY-MM-DD", None))
+		self.lineEdit_2.setPlaceholderText(_translate("MainWindow", "YYYYMMDD", None))
+		self.lineEdit_3.setPlaceholderText(_translate("MainWindow", "YYYYMMDD", None))
 		self.label_3.setText(_translate("MainWindow", "Start Date:", None))
 		self.label_4.setText(_translate("MainWindow", "End Date:", None))
 
@@ -148,15 +150,12 @@ class Second(QtGui.QMainWindow):
 
 	def send_userInput_to_database(self):
 		req_num = self.lineEdit.text()
-		SQL_Server_to_Oracle.check_row_count(user_oracle=self.user, passwrd=self.oracle_pass, req_num=req_num, test_num=self.textEdit.toPlainText(), start_date=self.lineEdit_2.text(), end_date=self.lineEdit_3.text())
+		return SQL_Server_to_Oracle.check_row_count(user_oracle=self.user, passwrd=self.oracle_pass, req_num=req_num, test_num=self.textEdit.toPlainText(), start_date=self.lineEdit_2.text(), end_date=self.lineEdit_3.text())
 
-
-
-
-
+		
 	def back_to_welcome(self):
 		self.close()
-		self.win = Welcome_Gui.Ui_MainWindow(user=self.user, passwrd=self.oracle_pass)
+		self.win = Welcome_Gui.Ui_MainWindow(user=self.user, passwrd=self.passwrd, oracle_pass=self.oracle_pass)
 		self.win.show()
 
 
@@ -188,8 +187,82 @@ class Second(QtGui.QMainWindow):
 	def tabkeypressevent(self, event):
 		if event.key() == QtCore.Qt.Key_Tab:
 			self.textEdit.setTabChangesFocus(True)
+			
+	def show_progress(self):
+		self.progress = ProgressDialog(parent=self, mainWindow=self)
+		self.progress.resize(250, 50)
+		self.progress.exec_()
+		
+	def validate_form(self):
+		req_num = str(self.lineEdit.text())
+		test_num = str(self.textEdit.toPlainText())
+		start_date = str(self.lineEdit_2.text())
+		end_date = str(self.lineEdit_3.text())
+		
+		if not req_num.isdigit():
+			QtGui.QMessageBox.warning(self, 'Error', 'Invalid Request No.!')
+		elif test_num.strip() == "":
+			QtGui.QMessageBox.warning(self, 'Error', 'Empty Test Number!')
+		elif not start_date.isdigit() or len(start_date) != 8:
+			QtGui.QMessageBox.warning(self, 'Error', 'Invalid Start Date!')
+		elif not end_date.isdigit() or len(end_date) != 8:
+			QtGui.QMessageBox.warning(self, 'Error', 'Invalid End Date!')
+		else:
+			self.show_progress()
 
+class ProgressDialog(QtGui.QDialog):
+	def __init__(self, parent=None, mainWindow=None):
+		super(ProgressDialog, self).__init__(parent)
+		
+		self.setWindowTitle("Please wait...")
+		self._want_to_close = False
+		
+		layout = QtGui.QVBoxLayout(self)
+		self.progressBar = QtGui.QProgressBar(self)
+		self.progressBar.setRange(0,0)
+		layout.addWidget(self.progressBar)
+		self.setLayout(layout)
 
+		self.myLongTask = TaskThread(mainWindow)
+		self.myLongTask.start()
+		self.myLongTask.taskFinishedSignal.connect(self.onFinished)
+		self.myLongTask.taskErrorSignal.connect(self.onError)
+
+	def onFinished(self, argument):
+		self.progressBar.setRange(0,1)
+		self.progressBar.setValue(1)
+		self._want_to_close = True
+		self.close()
+		QtGui.QMessageBox.information(self, 'Success', 'Done! Tests inserted: ' + argument)
+		
+	def onError(self, argument):
+		self._want_to_close = True
+		self.close()
+		QtGui.QMessageBox.critical(self, 'Error', argument)
+		
+	def closeEvent(self, evnt):
+		if self._want_to_close:
+			super(ProgressDialog, self).closeEvent(evnt)
+		else:
+			evnt.ignore()
+
+class TaskThread(QtCore.QThread):
+
+	taskFinishedSignal = QtCore.pyqtSignal(str)
+	taskErrorSignal = QtCore.pyqtSignal(str)
+	
+	def __init__(self, mainWindow=None):
+		super(TaskThread, self).__init__()
+		self.mainWindow = mainWindow
+	
+	def run(self):
+		try:
+			msg = self.mainWindow.send_userInput_to_database()
+			#for i in range(100000000):
+			#	x = i * i
+			self.taskFinishedSignal.emit(msg)
+		except Exception as e:
+			self.taskErrorSignal.emit(str(e))
 
 if __name__ == "__main__":
 

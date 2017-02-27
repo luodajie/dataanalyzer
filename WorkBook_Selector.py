@@ -6,11 +6,12 @@ from Analysis_Gui import Window
 import Welcome_Gui
 
 class WorkBookMain(QtGui.QMainWindow):
-	def __init__(self, parent=None, user = None, passwrd = None):
+	def __init__(self, parent=None, user = None, passwrd = None, oracle_pass=None):
 		super(WorkBookMain, self).__init__(parent)
 
 		self.user = user
 		self.passwrd = passwrd
+		self.oracle_pass = oracle_pass
 
 		self.setGeometry(70,70,841,591)
 		stylish(self)
@@ -132,7 +133,7 @@ class WorkBookMain(QtGui.QMainWindow):
 
 
 		try:
-			(path, names) = datameer_requests.get_sheets(int(id)) 
+			(path, names) = self.get_datameer_sheets(int(id))
 			self.label3.setText(path)
 
 			get_file_name = re.search('^(.*/)([^/]*)$', path)
@@ -180,7 +181,8 @@ class WorkBookMain(QtGui.QMainWindow):
 			msg.setText(str(e))
 			msg.exec_()
 
-
+	def get_datameer_sheets(self, id):
+		return datameer_requests.get_sheets(id) 
 
 	def text_edited(self):
 
@@ -200,8 +202,7 @@ class WorkBookMain(QtGui.QMainWindow):
 			name = self.button_group.checkedButton().text()
 			id = self.lineEdit.text()
 
-			wind = Window(self,id= int(id), sheet= name, user = self.user, coder = self.passwrd)
-			wind.show()
+			self.go_analysis_window(id=int(id), sheet=name, user = self.user, coder = self.passwrd)
 
 		except IOError as e:
 			msg = QtGui.QMessageBox()
@@ -210,7 +211,11 @@ class WorkBookMain(QtGui.QMainWindow):
 			msg.setText(str(e))
 			msg.exec_()
 
+	def go_analysis_window(self, id, sheet, user, coder):
+		wind = Window(parent=self, id= id, sheet= sheet, user = user, coder = coder)
+		wind.show()
 
+		
 	def reset(self):
 		self.lineEdit.clear()
 		self.label3.setText('')
@@ -219,7 +224,7 @@ class WorkBookMain(QtGui.QMainWindow):
 
 	def back_to_welcome(self):
 		self.close()
-		self.win = Welcome_Gui.Ui_MainWindow(user=self.user,passwrd=self.passwrd)
+		self.win = Welcome_Gui.Ui_MainWindow(user=self.user, passwrd=self.passwrd, oracle_pass=self.oracle_pass)
 		self.win.show()
 
 
