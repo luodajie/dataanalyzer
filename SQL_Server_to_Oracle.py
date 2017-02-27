@@ -47,7 +47,7 @@ def check_row_count(user_oracle=None, passwrd=None, req_num=None, test_num=None,
 	for d in data:
 		print d
 		if d[1] > 10000:
-			print "can't process as the count is too high for %s" % d[0]
+			raise IOError("can't process as the count is too high for %s" % d[0])
 		else:
 			list3.append(d[0])
 
@@ -57,6 +57,8 @@ def check_row_count(user_oracle=None, passwrd=None, req_num=None, test_num=None,
 	cursor.close()
 	connection.close()
 	create_temp_table(start_insert, end_insert, list(df['order_code']), user_oracle=user_oracle, passwrd=passwrd, req_num=req_num)
+	
+	return ",".join(list3)
 	
 
 
