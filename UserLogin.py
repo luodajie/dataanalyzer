@@ -11,7 +11,7 @@ class User_Widget(QtGui.QMainWindow):
 		super(User_Widget, self).__init__(parent)
 		app_icon = QtGui.QIcon()
 		app_icon.addFile('resources/analytic-icon.png', QtCore.QSize(16,16))
-		app_icon.addFile('resources/analytic-icon.png', QtCore.QSize(24,24))
+		app_icon.addFile('resources/analytic-bicon.png', QtCore.QSize(24,24))
 		app_icon.addFile('resources/analytic-icon.png', QtCore.QSize(32,32))
 		app_icon.addFile('resources/analytic-icon.png', QtCore.QSize(48,48))
 		app_icon.addFile('resources/analytic-icon.png', QtCore.QSize(256,256))

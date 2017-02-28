@@ -1,8 +1,9 @@
 from PyQt4 import QtCore, QtGui
 import sys
 from StyleSet import stylish
-from WorkBook_Selector import WorkBookMain
+from WorkBook_Selector import WorkBookMain, rename_column
 import data_migration_GUI
+from Rename_Column import Column_Window
 
 try:
 	_fromUtf8 = QtCore.QString.fromUtf8
@@ -56,6 +57,11 @@ class Ui_MainWindow(QtGui.QMainWindow):
 		self.pushButton_2.setObjectName(_fromUtf8("pushButton_2"))
 		self.pushButton_2.clicked.connect(self.workBookOpen)
 
+		self.pushButton_3 = QtGui.QPushButton(self.centralwidget)
+		self.pushButton_3.setGeometry(QtCore.QRect(330, 430, 140, 31))
+		self.pushButton_3.setObjectName(_fromUtf8("pushButton_3"))
+		self.pushButton_3.clicked.connect(self.columnWorkBook)
+
 		self.label_3 = QtGui.QLabel(self.centralwidget)
 		self.label_3.setGeometry(QtCore.QRect(380, 340, 21, 16))
 		self.label_3.setObjectName(_fromUtf8("label_3"))
@@ -106,6 +112,7 @@ class Ui_MainWindow(QtGui.QMainWindow):
 		self.label_2.setText(_translate("MainWindow", "Which task would you like to perform ?", None))
 		self.pushButton.setText(_translate("MainWindow", "Trends to Oracle", None))
 		self.pushButton_2.setText(_translate("MainWindow", "Result Graph", None))
+		self.pushButton_3.setText(_translate("MainWindow", "Rename Column", None))
 		self.label_3.setText(_translate("MainWindow", "OR", None))
 		self.menu_File.setTitle(_translate("MainWindow", "&File", None))
 		self.toolBar.setWindowTitle(_translate("MainWindow", "toolBar", None))
@@ -124,6 +131,10 @@ class Ui_MainWindow(QtGui.QMainWindow):
 	
 		self.sec = data_migration_GUI.Second(user=self.user, passwrd = self.passwrd, oracle_pass=self.oracle_pass)
 
+	def columnWorkBook(self):
+		self.close()
+
+		self.wind = rename_column(user = self.user, passwrd = self.passwrd)
 
 if __name__ == "__main__":
 

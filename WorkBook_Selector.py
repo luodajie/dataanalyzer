@@ -3,6 +3,7 @@ from PyQt4 import QtCore, QtGui
 from StyleSet import stylish
 import datameer_requests
 from Analysis_Gui import Window
+from Rename_Column import Column_Window
 import Welcome_Gui
 
 class WorkBookMain(QtGui.QMainWindow):
@@ -182,7 +183,7 @@ class WorkBookMain(QtGui.QMainWindow):
 			msg.exec_()
 
 	def get_datameer_sheets(self, id):
-		return datameer_requests.get_sheets(id) 
+		return datameer_requests.get_sheets(id)
 
 	def text_edited(self):
 
@@ -198,7 +199,7 @@ class WorkBookMain(QtGui.QMainWindow):
 		try:
 			if self.button_group.checkedButton() == None:
 				raise IOError('Please select a sheet!')
-				
+
 			name = self.button_group.checkedButton().text()
 			id = self.lineEdit.text()
 
@@ -215,7 +216,7 @@ class WorkBookMain(QtGui.QMainWindow):
 		wind = Window(parent=self, id= id, sheet= sheet, user = user, coder = coder)
 		wind.show()
 
-		
+
 	def reset(self):
 		self.lineEdit.clear()
 		self.label3.setText('')
@@ -233,6 +234,19 @@ class WorkBookMain(QtGui.QMainWindow):
 		cp = QtGui.QDesktopWidget().availableGeometry().center()
 		qr.moveCenter(cp)
 		self.move(qr.topLeft())
+
+
+
+class rename_column(WorkBookMain):
+	def __init__(self, parent = None, user= None, passwrd=None):
+		WorkBookMain.__init__(self, parent, user, passwrd)
+
+	def get_datameer_sheets(self, id):
+		return datameer_requests.get_column_sheets(id)
+
+	def go_analysis_window(self, id, sheet, user, coder):
+		self.wind = Column_Window(id= id, sheet= sheet, user = user, coder = coder)
+		# wind.show()
 
 
 
