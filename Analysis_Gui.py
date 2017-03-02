@@ -43,8 +43,10 @@ class Window(QtGui.QMainWindow):
 		self.table_layout = QtGui.QHBoxLayout()
 		self.grid_layout = QtGui.QGridLayout()
 		self.main_layout = QtGui.QVBoxLayout()
+		self.range_layout = QtGui.QHBoxLayout()
+
 		stylish(self.mainWidget)
-		self.setGeometry(50, 50, 1300, 900)
+		self.setGeometry(50, 50, 1300, 950)
 		
 		self.numLabel.setText("Test Number")
 		self.numLabel.setAlignment(QtCore.Qt.AlignCenter)
@@ -93,6 +95,68 @@ class Window(QtGui.QMainWindow):
 		self.tableWidget.setLineWidth(50)
 		self.tableWidget.setShowGrid(True)
 
+
+		font1 = QtGui.QFont()
+		font1.setPointSize(12)
+		font1.setBold(True)
+		font1.setWeight(75)
+		font1.setFamily("Helvetica")
+		palette1 = QtGui.QPalette()
+		palette1.setColor(QtGui.QPalette.Foreground, QtCore.Qt.white)
+
+		self.x_min = QtGui.QLineEdit()
+		# self.x_min.setText('0')
+		self.x_min.setFixedWidth(200)
+		self.x_max = QtGui.QLineEdit()
+		self.x_max.setFixedWidth(200)
+		self.x_label = QtGui.QLabel('< X <')
+		self.x_min.setPalette(palette)
+		self.x_min.setFont(font1)
+		self.x_max.setPalette(palette)
+		self.x_max.setFont(font1)
+		self.x_label.setPalette(palette)
+		self.x_label.setFont(font1)
+
+		self.blank_label = QtGui.QLabel(',')
+		self.blank_label.setPalette(palette)
+		self.blank_label.setFont(font1)
+
+		self.y_min = QtGui.QLineEdit()
+		self.y_min.setFixedWidth(200)
+		self.y_max = QtGui.QLineEdit()
+		self.y_max.setFixedWidth(200)
+		self.y_label = QtGui.QLabel('< Y <')
+		self.y_min.setPalette(palette)
+		self.y_min.setFont(font1)
+		self.y_max.setPalette(palette)
+		self.y_max.setFont(font1)
+		self.y_label.setPalette(palette)
+		self.y_label.setFont(font1)
+
+		self.blank_label1 = QtGui.QLabel()
+
+		self.range_button = QtGui.QPushButton("Set Range")
+		self.range_button.setFixedWidth(100)
+		self.range_button.clicked.connect(self.data_by_range)
+
+		self.blank_label2 = QtGui.QLabel()
+		self.blank_label2.setFixedWidth(150)
+
+		self.range_layout.addWidget(self.x_min)
+		self.range_layout.addWidget(self.x_label)
+		self.range_layout.addWidget(self.x_max)
+		self.range_layout.addWidget(self.blank_label)
+		self.range_layout.addWidget(self.y_min)
+		self.range_layout.addWidget(self.y_label)
+		self.range_layout.addWidget(self.y_max)
+		self.range_layout.addWidget(self.blank_label1)
+		self.range_layout.addWidget(self.range_button)
+		self.range_layout.addWidget(self.blank_label2)
+		self.range_layout.minimumHeightForWidth(10)
+		self.range_layout.setAlignment(QtCore.Qt.AlignHCenter)
+		self.range_layout.setMargin(20)
+
+
 		font = QtGui.QFont()
 		font.setPointSize(11)
 		font.setWeight(10)
@@ -112,7 +176,6 @@ class Window(QtGui.QMainWindow):
 								   border-radius:14px; color: rgb(230, 230, 230);} * { gridline-color: gray }"
 		self.tableWidget.setStyleSheet(stylesheet)
 		self.tableWidget.horizontalHeader().setFont(font_header)
-		# self.tableWidget.setAlternatingRowColors(True)
 
 		
 		self.barPlotButton = QtGui.QPushButton()
@@ -137,7 +200,6 @@ class Window(QtGui.QMainWindow):
 		self.label_layout.addWidget(self.nameLabel, 0,2)
 
 		self.table_layout.addWidget(self.tableWidget)
-		# self.table_layout.addStretch()
 
 		self.grid_layout.addLayout(self.label_layout, 0,1)
 		self.grid_layout.addWidget(self.tableLabel, 0, 4)
@@ -145,19 +207,18 @@ class Window(QtGui.QMainWindow):
 		self.grid_layout.addWidget(self.barPlotButton, 1, 3)
 		self.grid_layout.addLayout(self.table_layout, 1, 4)
 
+
 		# scatter plot
 		self.plot_scat = MatplotScatWidget()
 		
 		self.main_layout.addLayout(self.grid_layout)
+		self.main_layout.addLayout(self.range_layout)
 		self.main_layout.addWidget(self.plot_scat)
 		self.mainWidget.setLayout(self.main_layout)
-		
+
 		# initial test codes and names
 		self.loadTest()
-		
-		# main_menu = self.menuBar()
-		# file_menu = main_menu.addMenu("&Quit")
-		# file_menu.addAction(extract_action)
+
 		
 		self.statusBar()
 		self.center()
@@ -217,6 +278,8 @@ class Window(QtGui.QMainWindow):
 		# Draw scatter plot
 		self.plot_scat.print_g1(fnum=numeric_values)
 
+		self.range_data = numeric_values
+
 		# Fetching description of alpha values from database
 		desc = OracleDb.description_fetcher(abbrv_list=alpha_values['result'])
 
@@ -244,6 +307,22 @@ class Window(QtGui.QMainWindow):
 		testname_item = self.nameListWidget.currentItem()
 		self.testListWidget.scrollToItem(testnumber_item, QtGui.QAbstractItemView.PositionAtTop)
 		self.nameListWidget.scrollToItem(testname_item, QtGui.QAbstractItemView.PositionAtTop)
+
+	def data_by_range(self):
+		sub_numeric_value = pd.DataFrame(self.range_data)
+		x_min =  self.x_min.text()
+		x_max =  self.x_max.text()
+		if x_min == '':
+			result =  sub_numeric_value[(sub_numeric_value.result >= min(sub_numeric_value.ix[:,0])) & (sub_numeric_value.result <= float(x_max))]
+		elif x_max == '':
+			result =  sub_numeric_value[(sub_numeric_value.result >= float(x_min)) & (sub_numeric_value.result <= max(sub_numeric_value.ix[:,0]))]
+		else:
+			result = sub_numeric_value[(sub_numeric_value.result >= float(x_min)) & (sub_numeric_value.result <= float(x_max))]
+
+		self.plot_scat.print_g1(fnum=result)
+		print result
+		print result['Count']
+
 		
 	def center(self):
 		qr = self.frameGeometry()
