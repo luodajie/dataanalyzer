@@ -1,9 +1,8 @@
 from PyQt4 import QtCore, QtGui
 import sys
 from StyleSet import stylish
-from WorkBook_Selector import WorkBookMain, rename_column
+from WorkBook_Selector import WorkBookMain, WorkBookRenameColumn
 import data_migration_GUI
-from Rename_Column import Column_Window
 
 try:
 	_fromUtf8 = QtCore.QString.fromUtf8
@@ -60,7 +59,7 @@ class Ui_MainWindow(QtGui.QMainWindow):
 		self.pushButton_3 = QtGui.QPushButton(self.centralwidget)
 		self.pushButton_3.setGeometry(QtCore.QRect(330, 430, 140, 31))
 		self.pushButton_3.setObjectName(_fromUtf8("pushButton_3"))
-		self.pushButton_3.clicked.connect(self.columnWorkBook)
+		self.pushButton_3.clicked.connect(self.columnWorkBookOpen)
 
 		self.label_3 = QtGui.QLabel(self.centralwidget)
 		self.label_3.setGeometry(QtCore.QRect(380, 340, 21, 16))
@@ -131,10 +130,9 @@ class Ui_MainWindow(QtGui.QMainWindow):
 	
 		self.sec = data_migration_GUI.Second(user=self.user, passwrd = self.passwrd, oracle_pass=self.oracle_pass)
 
-	def columnWorkBook(self):
+	def columnWorkBookOpen(self):
 		self.close()
-
-		self.wind = rename_column(user = self.user, passwrd = self.passwrd)
+		self.wind = WorkBookRenameColumn(user = self.user, passwrd = self.passwrd, oracle_pass=self.oracle_pass)
 
 if __name__ == "__main__":
 

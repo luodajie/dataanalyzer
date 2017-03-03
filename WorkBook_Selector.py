@@ -237,9 +237,9 @@ class WorkBookMain(QtGui.QMainWindow):
 
 
 
-class rename_column(WorkBookMain):
-	def __init__(self, parent = None, user= None, passwrd=None):
-		WorkBookMain.__init__(self, parent, user, passwrd)
+class WorkBookRenameColumn(WorkBookMain):
+	def __init__(self, parent=None, user = None, passwrd = None, oracle_pass=None):
+		WorkBookMain.__init__(self, parent, user, passwrd, oracle_pass)
 
 	def get_datameer_sheets(self, id):
 		return datameer_requests.get_column_sheets(id)

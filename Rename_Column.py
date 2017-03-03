@@ -1,7 +1,7 @@
 import json
+import copy
 from PyQt4 import QtGui, QtCore
-import requests
-from requests.packages.urllib3.exceptions import InsecureRequestWarning
+import datameer_requests
 from StyleSet import stylish
 
 
@@ -9,50 +9,49 @@ from StyleSet import stylish
 class Column_Window(QtGui.QWidget):
 	def __init__(self, id = None, sheet= None,  user=None, coder = None):
 		QtGui.QWidget.__init__(self)
+		
 		stylish(self)
-		self.id = id
+		self.id = id #workbook id
 		self.sheet = sheet
 		self.user = user
 		self.passwrd = coder
 
-		check_API(self.id, self.sheet, self.user, self.passwrd)
-		self.val = jsons
+		self.get_column(self.id, self.sheet, self.user, self.passwrd)
+		
 		mygroupbox = QtGui.QGroupBox()
 		myform = QtGui.QFormLayout()
+		
 		self.font = QtGui.QFont()
 		palette = QtGui.QPalette()
-
 		self.font.setPointSize(12)
 		self.font.setBold(True)
 		self.font.setWeight(50)
 
 
-		if len(jsons)==0:
+		if len(self.column_json)==0:
 			self.msgbox = QtGui.QMessageBox()
 			self.msgbox.setWindowTitle("Error")
 			self.msgbox.setText("Cannot Edit Columns for this sheet because Columns have dependencies")
 			self.msgbox.exec_()
 
-
 		else:
 			# Labels are getting generated dynamically
 			self.setWindowTitle('Rename Column')
-			for key, vals in self.val.items():
-				exec('label = QtGui.QLabel("Formulas :")')
-				exec( 'label'+str(key)+'=QtGui.QLabel("'+str(vals)+'")')
-				exec( 'label'+str(key)+'.setFixedWidth(250)' )
+			for key, vals in self.column_json.items():
+				exec('label'+str(key)+'=QtGui.QLabel("'+str(vals)+'")')
+				exec('label'+str(key)+'.setFixedWidth(350)' )
 				exec('label'+str(key)+'.setPalette(palette)')
 				exec('label'+str(key)+'.setFont(self.font)')
 				exec('label'+str(key)+'.setTextInteractionFlags(QtCore.Qt.LinksAccessibleByMouse|QtCore.Qt.TextSelectableByKeyboard|QtCore.Qt.TextSelectableByMouse)')
 
 			# TextField are generated dynamically
-				exec( 'self.myLineEdit'+str(key)+'=QtGui.QLineEdit()' )
+				exec('self.myLineEdit'+str(key)+'=QtGui.QLineEdit()' )
 				exec('self.myLineEdit'+str(key)+'.setPalette(palette)')
 				exec('self.myLineEdit'+str(key)+'.setFont(self.font)')
 				if '.' in str(vals):
-					exec( 'self.myLineEdit'+str(key)+'.setText("'+ str(vals).split('.')[1] +'")' )
+					exec('self.myLineEdit'+str(key)+'.setText("'+ str(vals).split('.')[-1] +'")' )
 				else:
-					exec( 'self.myLineEdit'+str(key)+'.setText("'+ str(vals) +'")' )
+					exec('self.myLineEdit'+str(key)+'.setText("'+ str(vals) +'")' )
 
 				exec( 'myform.addRow(label'+str(key)+',self.myLineEdit'+str(key)+')' )
 
@@ -66,15 +65,12 @@ class Column_Window(QtGui.QWidget):
 			Button_01.clicked.connect(self.post_json)
 
 			Button_02 = QtGui.QPushButton("Recover")
-			Button_02.clicked.connect(self.backup_button)
-
+			Button_02.clicked.connect(self.recover_data)
 
 			ButtonsLayout.addWidget(Button_01)
 			ButtonsLayout.addWidget(Button_02)
 
-
 			ButtonBox.setLayout(ButtonsLayout)
-
 
 			scroll = QtGui.QScrollArea()
 			scroll.setWidget(mygroupbox)
@@ -86,17 +82,30 @@ class Column_Window(QtGui.QWidget):
 			self.setGeometry(500, 100, 800, 400)
 			self.show()
 
+			
+	def get_column(self, id, sheet, user, passwrd):	
+		self.collect_json = datameer_requests.get_workbook_json(id)
+		self.backup_json = copy.deepcopy(self.collect_json)
+		self.column_json = {}
+
+		for index, data in enumerate(self.collect_json['sheets']):
+			# data is dict for a sheet
+			if data['name'] == sheet:
+				# check if 'formulas' is in the keys of data
+				if 'formulas' in data:
+					if any('(' in data['formulas'][i]['formulaString'] for i, v in enumerate(data['formulas'])):
+						return False
+					if any(')' in data['formulas'][i]['formulaString'] for i, v in enumerate(data['formulas'])):
+						return False
+					else:
+						for i in data['formulas']:
+							self.column_json[i['columnId']]=i['columnName']
 
 	def post_json(self):
 		lst = {}
-		for key, vals in self.val.items():
+		for key, vals in self.column_json.items():
 			lst[key] = (str(eval( 'self.myLineEdit'+str(key)+'.text()' )))
-		print lst
-		replace(lst)
-
-
-	def backup_button(self):
-		recover_data()
+		self.replace(lst)
 
 	def center(self):
 		qr = self.frameGeometry()
@@ -104,100 +113,48 @@ class Column_Window(QtGui.QWidget):
 		qr.moveCenter(cp)
 		self.move(qr.topLeft())
 
+	def recover_data(self):
+		try:
+			datameer_requests.post_workbook_json(self.id, self.backup_json)
+		
+			msgbox = QtGui.QMessageBox()
+			msgbox.setWindowTitle("Successful Recovery")
+			msgbox.setText("Recovered Successfully")
+			msgbox.exec_()
 
+		except IOError as e:
+			msgbox = QtGui.QMessageBox()
+			msgbox.setWindowTitle("Error")
+			msgbox.setText(str(e))
+			msgbox.exec_()
 
-def check_API(id, sheet, user, passwrd):
-	global backup
-	global userid
-	global password
-	global idd
+	def replace(self, replace_word):
 
-	idd = id
-	userid = user
-	password = passwrd
-	requests.packages.urllib3.disable_warnings(InsecureRequestWarning)   #auth=("luod", "luod1")
-	data = requests.get("https://datameer.labcorp.com:8443/rest/workbook/%d" %id,  auth=(user, passwrd),
-						verify=False)
-	backup = data
+		try:
+			if len(replace_word.values()) != len(set(replace_word.values())):
+				raise IOError('Duplicated Column Name Found!')
+		
+			for index, data in enumerate(self.collect_json['sheets']):
+				if data['name'] == self.sheet:
+					if 'formulas' in data:
+						for i, v in enumerate(data['columnStyles']):
+							for key, vals in replace_word.items():
+								if data['columnStyles'][i]['columnId'] == key:
+									data['columnStyles'][i]['name'] = replace_word[key]
 
-	if data.status_code != 200:
-		raise IOError("Sheet Not Found" + str(data.status_code))
+		
+			datameer_requests.post_workbook_json(self.id, self.collect_json)
 
-	get_column_name(data=data, sheet=sheet)
+			msgbox = QtGui.QMessageBox()
+			msgbox.setWindowTitle("Success")
+			msgbox.setText("JSON posted Successfully")
+			msgbox.exec_()
 
-
-def recover_data():
-	backup_data = backup.json()
-	r = requests.put("https://datameer.labcorp.com:8443/rest/workbook/%d" %idd,  data=json.dumps(backup_data, indent=4), headers ={'Content-Type':'application/json'} , auth=(userid, password), verify=False)
-	if r.status_code==200:
-		msgbox = QtGui.QMessageBox()
-		msgbox.setWindowTitle("Successful Recovery ")
-		msgbox.setText("JSON Recovered Successfully \n Status Code = 200 (Successful)")
-		msgbox.exec_()
-
-	else:
-		msgbox = QtGui.QMessageBox()
-		msgbox.setWindowTitle("Error")
-		msgbox.setText("Cannot Post: Some Error Occured  \n Server Error: %s" % str(r.status_code))
-		msgbox.exec_()
-
-def get_column_name(data=None, sheet=None):
-	global collect_json_data
-	collect_json_data = data.json()
-
-	search(collect_json_data=collect_json_data, sheet = sheet )
-
-
-
-def search(collect_json_data=None, sheet = None):
-	global jsons
-	global sheetName
-	sheetName = sheet
-	jsons = {}
-
-	for index, data in enumerate(collect_json_data['sheets']):
-
-		if data['name'] == sheetName:
-			for item in data:
-				if 'formulas' in item:
-
-					if any('(' in data['formulas'][i]['formulaString'] for i, v in enumerate(data['formulas'])):
-						return False
-					if any(')' in data['formulas'][i]['formulaString'] for i, v in enumerate(data['formulas'])):
-						return False
-					else:
-						for i in data['formulas']:
-							jsons[i['columnId']]=i['columnName']
-
-
-
-def replace(replace_word):
-
-	for index, data in enumerate(collect_json_data['sheets']):
-
-		if data['name'] == sheetName:
-			for i in data:
-				if 'formulas' in i:
-
-					for i, v in enumerate(data['columnStyles']) :
-						print data['columnStyles'][i]['name']
-						for key, vals in replace_word.items():
-							if data['columnStyles'][i]['columnId'] == key:
-								data['columnStyles'][i]['name'] = replace_word[key]
-
-	r = requests.put("https://datameer.labcorp.com:8443/rest/workbook/%d" %idd, data=json.dumps(collect_json_data, indent=4), headers ={'Content-Type':'application/json'} , auth=(userid, password), verify=False)
-
-	if r.status_code==200:
-		msgbox = QtGui.QMessageBox()
-		msgbox.setWindowTitle("Success")
-		msgbox.setText("JSON posted Successfully")
-		msgbox.exec_()
-
-	else:
-		msgbox = QtGui.QMessageBox()
-		msgbox.setWindowTitle("Error")
-		msgbox.setText("Cannot Post: Some Error Occured  \n Server Error: %s" % str(r.status_code))
-		msgbox.exec_()
+		except IOError as e:
+			msgbox = QtGui.QMessageBox()
+			msgbox.setWindowTitle("Error")
+			msgbox.setText(str(e))
+			msgbox.exec_()
 
 
 if __name__ == '__main__':

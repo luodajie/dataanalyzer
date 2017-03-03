@@ -1,8 +1,6 @@
 import requests
 from requests.packages.urllib3.exceptions import InsecureRequestWarning
-from PyQt4 import QtGui
-import cx_Oracle
-import OracleDb
+import json
 
 
 g_userid = ''
@@ -29,9 +27,21 @@ def get_column_sheets(id):
 	for index, data in enumerate(js['sheets']):
 		names.append(data['name'])
 
-
-
 	return (path, names)
+	
+def get_workbook_json(id):
+	requests.packages.urllib3.disable_warnings(InsecureRequestWarning)   
+	r = requests.get("https://datameer.labcorp.com:8443/rest/workbook/%d" % id,  auth=(g_userid,g_password), verify=False)
+	if r.status_code != 200:
+		raise IOError('Workbook ID '+ str(id) + ' Not Found!')
+	return r.json()
+	
+def post_workbook_json(id, json_data):
+	requests.packages.urllib3.disable_warnings(InsecureRequestWarning)   
+	r = requests.put("https://datameer.labcorp.com:8443/rest/workbook/%d" % id,  data=json.dumps(json_data, indent=4), headers ={'Content-Type':'application/json'} , auth=(g_userid,g_password), verify=False)
+	if r.status_code != 200:
+		raise IOError('Cannot post JSON to Datameer.')
+	return r.status_code
 
 def get_user_info(userid, password):
 	requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
