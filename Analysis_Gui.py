@@ -44,7 +44,7 @@ class Window(QtGui.QMainWindow):
 		self.grid_layout = QtGui.QGridLayout()
 		self.main_layout = QtGui.QVBoxLayout()
 		self.range_layout = QtGui.QHBoxLayout()
-
+		
 		stylish(self.mainWidget)
 		self.setGeometry(50, 50, 1300, 950)
 		
@@ -94,18 +94,16 @@ class Window(QtGui.QMainWindow):
 		self.tableWidget.setObjectName("abbrvTable")
 		self.tableWidget.setLineWidth(50)
 		self.tableWidget.setShowGrid(True)
-
-
+		
 		font1 = QtGui.QFont()
-		font1.setPointSize(12)
-		font1.setBold(True)
-		font1.setWeight(75)
+		font1.setPointSize(11)
+		font1.setBold(False)
+		font1.setWeight(25)
 		font1.setFamily("Helvetica")
 		palette1 = QtGui.QPalette()
 		palette1.setColor(QtGui.QPalette.Foreground, QtCore.Qt.white)
 
 		self.x_min = QtGui.QLineEdit()
-		# self.x_min.setText('0')
 		self.x_min.setFixedWidth(200)
 		self.x_max = QtGui.QLineEdit()
 		self.x_max.setFixedWidth(200)
@@ -136,7 +134,8 @@ class Window(QtGui.QMainWindow):
 		self.blank_label1 = QtGui.QLabel()
 
 		self.range_button = QtGui.QPushButton("Set Range")
-		self.range_button.setFixedWidth(100)
+		#self.range_button.setFixedWidth(100)
+		self.range_button.setFixedSize(100, 30)
 		self.range_button.clicked.connect(self.data_by_range)
 
 		self.blank_label2 = QtGui.QLabel()
@@ -154,8 +153,7 @@ class Window(QtGui.QMainWindow):
 		self.range_layout.addWidget(self.blank_label2)
 		self.range_layout.minimumHeightForWidth(10)
 		self.range_layout.setAlignment(QtCore.Qt.AlignHCenter)
-		self.range_layout.setMargin(20)
-
+		self.range_layout.setMargin(10)
 
 		font = QtGui.QFont()
 		font.setPointSize(11)
@@ -176,6 +174,7 @@ class Window(QtGui.QMainWindow):
 								   border-radius:14px; color: rgb(230, 230, 230);} * { gridline-color: gray }"
 		self.tableWidget.setStyleSheet(stylesheet)
 		self.tableWidget.horizontalHeader().setFont(font_header)
+		# self.tableWidget.setAlternatingRowColors(True)
 
 		
 		self.barPlotButton = QtGui.QPushButton()
@@ -200,13 +199,13 @@ class Window(QtGui.QMainWindow):
 		self.label_layout.addWidget(self.nameLabel, 0,2)
 
 		self.table_layout.addWidget(self.tableWidget)
+		# self.table_layout.addStretch()
 
 		self.grid_layout.addLayout(self.label_layout, 0,1)
 		self.grid_layout.addWidget(self.tableLabel, 0, 4)
 		self.grid_layout.addLayout(self.list_layout, 1, 1)
 		self.grid_layout.addWidget(self.barPlotButton, 1, 3)
 		self.grid_layout.addLayout(self.table_layout, 1, 4)
-
 
 		# scatter plot
 		self.plot_scat = MatplotScatWidget()
@@ -215,10 +214,13 @@ class Window(QtGui.QMainWindow):
 		self.main_layout.addLayout(self.range_layout)
 		self.main_layout.addWidget(self.plot_scat)
 		self.mainWidget.setLayout(self.main_layout)
-
+		
 		# initial test codes and names
 		self.loadTest()
-
+		
+		# main_menu = self.menuBar()
+		# file_menu = main_menu.addMenu("&Quit")
+		# file_menu.addAction(extract_action)
 		
 		self.statusBar()
 		self.center()
@@ -234,6 +236,7 @@ class Window(QtGui.QMainWindow):
 		
 		# keep data for efficiency
 		self.data = df
+		self.range_data = None
 		
 		lst = OracleDb.testName_fetcher(test_number = test_numbers)
 		self.nameListWidget.clear()
@@ -250,6 +253,12 @@ class Window(QtGui.QMainWindow):
 		self.main_layout.removeWidget(self.plot_scat)
 		self.plot_scat = MatplotScatWidget()
 		self.main_layout.addWidget(self.plot_scat)
+		
+		# clean
+		self.x_min.setText('')
+		self.x_max.setText('')
+		self.y_min.setText('')
+		self.y_max.setText('')
 		
 		# refresh scatter plot and alpha value table
 		self.generate_numeric_alpha(tx=test_number)
@@ -277,7 +286,8 @@ class Window(QtGui.QMainWindow):
 
 		# Draw scatter plot
 		self.plot_scat.print_g1(fnum=numeric_values)
-
+		
+		# Keep for subsetting
 		self.range_data = numeric_values
 
 		# Fetching description of alpha values from database
@@ -307,23 +317,42 @@ class Window(QtGui.QMainWindow):
 		testname_item = self.nameListWidget.currentItem()
 		self.testListWidget.scrollToItem(testnumber_item, QtGui.QAbstractItemView.PositionAtTop)
 		self.nameListWidget.scrollToItem(testname_item, QtGui.QAbstractItemView.PositionAtTop)
-
-	def data_by_range(self):
-		sub_numeric_value = pd.DataFrame(self.range_data)
-		x_min =  self.x_min.text()
-		x_max =  self.x_max.text()
-		if x_min == '':
-			result =  sub_numeric_value[(sub_numeric_value.result >= min(sub_numeric_value.ix[:,0])) & (sub_numeric_value.result <= float(x_max))]
-		elif x_max == '':
-			result =  sub_numeric_value[(sub_numeric_value.result >= float(x_min)) & (sub_numeric_value.result <= max(sub_numeric_value.ix[:,0]))]
-		else:
-			result = sub_numeric_value[(sub_numeric_value.result >= float(x_min)) & (sub_numeric_value.result <= float(x_max))]
-
-		self.plot_scat.print_g1(fnum=result)
-		print result
-		print result['Count']
-
 		
+	def data_by_range(self):
+		if self.range_data is None:
+			return
+	
+		x_min = str(self.x_min.text())
+		x_max = str(self.x_max.text())
+		y_min = str(self.y_min.text())
+		y_max = str(self.y_max.text())
+		
+		if x_min != '' and not x_min.replace('.','',1).isdigit():
+			QtGui.QMessageBox.warning(self, 'Error', 'Invalid x lower range')
+			return
+		elif x_max != '' and not x_max.replace('.','',1).isdigit():
+			QtGui.QMessageBox.warning(self, 'Error', 'Invalid x upper range')
+			return
+		elif y_min != '' and not y_min.replace('.','',1).isdigit():
+			QtGui.QMessageBox.warning(self, 'Error', 'Invalid y lower range')
+			return
+		elif y_max != '' and not y_max.replace('.','',1).isdigit():
+			QtGui.QMessageBox.warning(self, 'Error', 'Invalid y upper range')
+			return
+	
+		df = self.range_data
+		
+		if x_min != '':
+			df = df[df.result >= float(x_min)]
+		if x_max != '':
+			df = df[df.result <= float(x_max)]
+		if y_min != '':
+			df = df[df.Count >= float(y_min)]
+		if y_max != '':
+			df = df[df.Count <= float(y_max)]
+		
+		self.plot_scat.print_g1(fnum=df)
+	
 	def center(self):
 		qr = self.frameGeometry()
 		cp = QtGui.QDesktopWidget().availableGeometry().center()

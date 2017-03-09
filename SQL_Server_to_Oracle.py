@@ -107,7 +107,8 @@ def collect_data(test_num = [], connection=None, cursor= None, user_oracle= None
 
 	stmt1 = "select a.eid, r.universalserviceid, r.universalservicename, upper(ltrim(rtrim(pd.LName))) + upper(ltrim(rtrim(pd.FName))) + convert(VARCHAR(10), pd.DOB, 120) as pseudo_lpid, " \
 			"pd.DOB, pd.sex, ac.AccountNumber as ORDERING_ACCT_NUM, ac.accountmailingnamefirstline as ACCOUNT_FACILITY, ac.accountmailingaddressstreet as ACCOUNT_ADDRESS, " \
-			"ac.AccountMailingAddressState as ACCOUNT_ST, ac.AccountMailingAddressZipCode as ACCOUNT_Zip, pd.orderingphysiciannpi as PHYS_NPI, a2.OIDexternal as lpid " \
+			"ac.AccountMailingAddressState as ACCOUNT_ST, ac.AccountMailingAddressZipCode as ACCOUNT_Zip, pd.orderingphysiciannpi as PHYS_NPI, a2.OIDexternal as lpid, r.FillerOrderNo, " \
+			"r.observationdttm as draw_date " \
 			"into #ORD_ACCTS " \
 			"from " \
 			"#EIDS a, " \
@@ -120,7 +121,8 @@ def collect_data(test_num = [], connection=None, cursor= None, user_oracle= None
 			"union all " \
 			"select a.eid, r.universalserviceid, r.universalservicename, upper(ltrim(rtrim(pd.LName))) + upper(ltrim(rtrim(pd.FName))) + convert(VARCHAR(10), pd.DOB,120) as pseudo_lpid, " \
 			"pd.DOB, pd.sex, ac.AccountNumber as ORDERING_ACCT_NUM, ac.accountmailingnamefirstline as ACCOUNT_FACILITY, ac.accountmailingaddressstreet as ACCOUNT_ADDRESS, " \
-			"ac.AccountMailingAddressState as ACCOUNT_ST, ac.AccountMailingAddressZipCode as ACCOUNT_Zip, pd.orderingphysiciannpi as PHYS_NPI, a2.OIDexternal as lpid " \
+			"ac.AccountMailingAddressState as ACCOUNT_ST, ac.AccountMailingAddressZipCode as ACCOUNT_Zip, pd.orderingphysiciannpi as PHYS_NPI, a2.OIDexternal as lpid, r.FillerOrderNo, " \
+			"r.observationdttm as draw_date " \
 			"from " \
 			"#EIDS a, " \
 			"[azPATH_Combined].[dbo].[OBR601] r (NOLOCK), " \
@@ -140,7 +142,7 @@ def collect_data(test_num = [], connection=None, cursor= None, user_oracle= None
 
 	print "TESTS:"
 
-	stmt2 = "SELECT oa.pseudo_lpid, oa.DOB, oa.sex, oa.lpid, oa.phys_npi, oa.ordering_acct_num, oa.account_facility, oa.account_address, oa.account_st, oa.account_zip, " \
+	stmt2 = "SELECT oa.pseudo_lpid, oa.FillerOrderNo, oa.DOB, oa.sex, oa.lpid, oa.phys_npi, oa.ordering_acct_num, oa.account_facility, oa.account_address, oa.account_st, oa.account_zip, " \
 			"p.eid, p.observationdttm as draw_date, p.observresultstatus, p.universalserviceid as order_code, oa.universalservicename as order_name, p.observationid, p.observation, " \
 			"p.units_code, left(replace(replace(replace(p.observationvalue,char(13),''),char(10),''),char(9),''),600) as observationvalue " \
 			"into #TESTS " \
@@ -150,7 +152,7 @@ def collect_data(test_num = [], connection=None, cursor= None, user_oracle= None
 			"[azLAB_Combined].[dbo].[OBX601] p (NOLOCK) " \
 			"where a.eid=p.eid and a.eid = oa.eid and p.universalserviceid in (%s) " \
 			"union all " \
-			"SELECT oa.pseudo_lpid, oa.DOB, oa.sex, oa.lpid, oa.phys_npi, oa.ordering_acct_num, oa.account_facility, oa.account_address, oa.account_st, oa.account_zip, " \
+			"SELECT oa.pseudo_lpid, oa.FillerOrderNo, oa.DOB, oa.sex, oa.lpid, oa.phys_npi, oa.ordering_acct_num, oa.account_facility, oa.account_address, oa.account_st, oa.account_zip, " \
 			"p.eid, p.observationdttm as draw_date, p.observresultstatus, p.universalserviceid as order_code, oa.universalservicename as order_name, p.observationid, p.observation, " \
 			"p.units_code, left(replace(replace(replace(p.observationvalue,char(13),''),char(10),''),char(9),''),600) as observationvalue " \
 			"FROM " \
@@ -171,7 +173,6 @@ def collect_data(test_num = [], connection=None, cursor= None, user_oracle= None
 	connection.close()
 	
 	row_length = len(ord_accts_table_data) + len(tests_table_data)
-	#ProgressBar_Gui.Window(data=row_length)
 	check_existing_table(ord_accts_table_data, tests_table_data , user=str(user_oracle), passwrd=str(passwrd), req_num=str(req_num))
 
 
@@ -203,42 +204,42 @@ def check_existing_table(ord_accts_table_data, tests_table_data, user=None, pass
 
 
 def create_trends_ords_table(trends_demo_tablename, cur, req_num):
-	create_stmt = "CREATE TABLE TRENDS_DEMO_%s (EID VARCHAR2(80),ORDER_CODE VARCHAR2(60),ORDER_NAME VARCHAR2(512),PSEUDO_LPID VARCHAR2(130),DOB DATE,SEX VARCHAR2(50), " \
+	create_stmt = "CREATE TABLE TRENDS_DEMO_%s (EID VARCHAR2(80),ORDER_CODE VARCHAR2(60),ORDER_NAME VARCHAR2(512),PSEUDO_LPID VARCHAR2(130),DATE_OF_BIRTH DATE,PATIENT_SEX VARCHAR2(50), " \
 				  "ORDERING_ACCT_NUM VARCHAR2(8),ACCOUNT_FACILITY VARCHAR2(30),ACCOUNT_ADDRESS VARCHAR2(35), " \
-				  "ACCOUNT_ST VARCHAR2(2),ACCOUNT_ZIP VARCHAR2(5),PHYS_NPI VARCHAR2(50),LPID VARCHAR2(256))" % req_num
+				  "ACCOUNT_ST VARCHAR2(2),ACCOUNT_ZIP VARCHAR2(5),NPI_NUM VARCHAR2(50),LPID VARCHAR2(256),FILLERORDERNO VARCHAR2(60),DRAW_DATE DATE)" % req_num
 
 	drop_stmt = "DROP TABLE TRENDS_DEMO_%s" % req_num
+	
+	grant_stmt = "GRANT SELECT ON TRENDS_DEMO_%s TO PUBLIC" % req_num
 
 	if trends_demo_tablename:
 		print "Table Found:", trends_demo_tablename[0]
 		cur.execute(drop_stmt)
 		print "Table Dropped"
-		cur.execute(create_stmt)
-		print "Table Created"
-	else:
-		cur.execute(create_stmt)
-		print "Table Created from else"
-
+		
+	cur.execute(create_stmt)
+	cur.execute(grant_stmt)
+	print "Table Created"
 
 def create_trends_rslts_table(trends_result_tablename, cur1, req_num):
-	create_stmt1 = "CREATE TABLE TRENDS_RESULTS_%s (PSEUDO_LPID VARCHAR2(130),DOB DATE,SEX VARCHAR2(50),LPID VARCHAR2(256),PHYS_NPI VARCHAR2(50),ORDERING_ACCT_NUM VARCHAR2(8), " \
+	create_stmt1 = "CREATE TABLE TRENDS_RESULTS_%s (PSEUDO_LPID VARCHAR2(130),FILLERORDERNO VARCHAR2(60),DATE_OF_BIRTH DATE,PATIENT_SEX VARCHAR2(50),LPID VARCHAR2(256),NPI_NUM VARCHAR2(50),ORDERING_ACCT_NUM VARCHAR2(8), " \
 				   "ACCOUNT_FACILITY VARCHAR2(30),ACCOUNT_ADDRESS VARCHAR2(35),ACCOUNT_ST VARCHAR2(2), " \
 				   "ACCOUNT_ZIP VARCHAR2(5),EID VARCHAR2(80),DRAW_DATE DATE,OBSERVRESULTSTATUS VARCHAR2(60), " \
 				   "ORDER_CODE VARCHAR2(100),ORDER_NAME VARCHAR2(512),TEST_NUMBER VARCHAR2(60),TEST_NAME VARCHAR2(150), " \
 				   "UNITS_CODE VARCHAR2(60),OBSERVATIONVALUE VARCHAR2(3500))" % req_num
 
 	drop_stmt1 = "DROP TABLE TRENDS_RESULTS_%s" % req_num
+	
+	grant_stmt1 = "GRANT SELECT ON TRENDS_RESULTS_%s TO PUBLIC" % req_num
 
 	if trends_result_tablename:
 		print "Table Found:", trends_result_tablename[0]
 		cur1.execute(drop_stmt1)
 		print "Table Dropped"
-		cur1.execute(create_stmt1)
-		print "Table Created"
-	else:
-		cur1.execute(create_stmt1)
-		print "Table Created from else"
 
+	cur1.execute(create_stmt1)
+	cur1.execute(grant_stmt1)
+	print "Table Created"
 
 def insert_data_trends_ords_table(ord_accts_table_data, user, passwrd, req_num):
 	table = "TRENDS_DEMO_%s" % req_num
@@ -248,10 +249,10 @@ def insert_data_trends_ords_table(ord_accts_table_data, user, passwrd, req_num):
 	cur = con.cursor()
 
 	cur.bindarraysize = len(ord_accts_table_data)
-	cur.setinputsizes(80, 60, 512, 130, 10, 50, 8, 30, 35, 2, 5, 50, 256)
+	cur.setinputsizes(80, 60, 512, 130, 10, 50, 8, 30, 35, 2, 5, 50, 256, 60, 10)
 	cur.executemany(
-		"INSERT INTO "+ table +" (EID, ORDER_CODE, ORDER_NAME, PSEUDO_LPID, DOB, SEX, ORDERING_ACCT_NUM, ACCOUNT_FACILITY, "
-		"ACCOUNT_ADDRESS, ACCOUNT_ST, ACCOUNT_ZIP, PHYS_NPI, LPID) VALUES(:1, :2, :3, :4, :5, :6, :7, :8, :9, :10, :11, :12, :13 )", ord_accts_table_data)
+		"INSERT INTO "+ table +" (EID, ORDER_CODE, ORDER_NAME, PSEUDO_LPID, DATE_OF_BIRTH, PATIENT_SEX, ORDERING_ACCT_NUM, ACCOUNT_FACILITY, "
+		"ACCOUNT_ADDRESS, ACCOUNT_ST, ACCOUNT_ZIP, NPI_NUM, LPID, FILLERORDERNO, DRAW_DATE) VALUES(:1, :2, :3, :4, :5, :6, :7, :8, :9, :10, :11, :12, :13, :14, :15 )", ord_accts_table_data)
 
 	con.commit()
 	print "Ord_accts Inserted"
@@ -268,11 +269,11 @@ def insert_data_trends_rslt_table(tests_table_data, user, passwrd, req_num):
 	cur = con.cursor()
 
 	cur.bindarraysize = len(tests_table_data)
-	cur.setinputsizes(130, 10, 50, 256, 50, 8, 30, 35, 2, 5, 80, 10, 60, 100, 512, 60, 150, 60, 3500)
+	cur.setinputsizes(130, 60, 10, 50, 256, 50, 8, 30, 35, 2, 5, 80, 10, 60, 100, 512, 60, 150, 60, 3500)
 	cur.executemany(
-		"INSERT INTO "+ table +" (PSEUDO_LPID, DOB, SEX, LPID, PHYS_NPI, ORDERING_ACCT_NUM, ACCOUNT_FACILITY, ACCOUNT_ADDRESS, ACCOUNT_ST, ACCOUNT_ZIP, EID, "
+		"INSERT INTO "+ table +" (PSEUDO_LPID, FILLERORDERNO, DATE_OF_BIRTH, PATIENT_SEX, LPID, NPI_NUM, ORDERING_ACCT_NUM, ACCOUNT_FACILITY, ACCOUNT_ADDRESS, ACCOUNT_ST, ACCOUNT_ZIP, EID, "
 		"DRAW_DATE, OBSERVRESULTSTATUS, ORDER_CODE, ORDER_NAME, TEST_NUMBER, TEST_NAME, UNITS_CODE, OBSERVATIONVALUE) "
-		"VALUES(:1, :2, :3, :4, :5, :6, :7, :8, :9, :10, :11, :12, :13, :14, :15, :16, :17, :18, :19 )", tests_table_data)
+		"VALUES(:1, :2, :3, :4, :5, :6, :7, :8, :9, :10, :11, :12, :13, :14, :15, :16, :17, :18, :19, :20 )", tests_table_data)
 
 	con.commit()
 	print "Tests Inserted"
