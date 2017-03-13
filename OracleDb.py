@@ -61,8 +61,11 @@ def check_dbCredentials(userid, password):
 			msgBox = QtGui.QMessageBox()
 			msgBox.setText("Please Enter Correct Oracle Password")
 			msgBox.show()
+			raise
 		else:
-			print('Database connection error: {0}'.format(e))
-			raise 
+			msgBox = QtGui.QMessageBox()
+			msgBox.setText('Database connection error: {0}'.format(e))
+			msgBox.show()
+			raise
 	except:
 		raise

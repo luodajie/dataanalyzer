@@ -3,7 +3,7 @@ import re
 import cx_Oracle
 import pandas as pd
 from PyQt4 import QtGui
-import ProgressBar_Gui
+
 
 def check_row_count(user_oracle=None, passwrd=None, req_num=None, test_num=None, start_date=None, end_date=None):
 	# Microsoft ODBC Driver 13.1

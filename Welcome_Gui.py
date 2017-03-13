@@ -82,7 +82,7 @@ class Ui_MainWindow(QtGui.QMainWindow):
 		self.action_DataBase.setShortcut("Ctrl+D")
 		self.action_DataBase.triggered.connect(self.OracleOpen)
 
-		self.action_Graphs = QtGui.QAction(QtGui.QIcon('resources/graph.ico'), "Graph", self)
+		self.action_Graphs = QtGui.QAction(QtGui.QIcon('resources/graph.png'), "Graph", self)
 		self.action_Graphs.setObjectName(_fromUtf8("action_Graphs"))
 		self.action_Graphs.setShortcut("Ctrl+G")
 		self.action_Graphs.triggered.connect(self.workBookOpen)
