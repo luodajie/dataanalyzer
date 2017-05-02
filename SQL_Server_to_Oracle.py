@@ -47,7 +47,7 @@ def check_row_count(user_oracle=None, passwrd=None, req_num=None, test_num=None,
 	for d in data:
 		print d
 		if d[1] > 10000:
-			raise IOError("can't process as the count is too high for %s" % d[0])
+			raise IOError("can't process as the count, %d, is too high for %s" % (d[1], d[0]))
 		else:
 			list3.append(d[0])
 
@@ -107,30 +107,30 @@ def collect_data(test_num = [], connection=None, cursor= None, user_oracle= None
 
 	stmt1 = "select a.eid, r.universalserviceid, r.universalservicename, upper(ltrim(rtrim(pd.LName))) + upper(ltrim(rtrim(pd.FName))) + convert(VARCHAR(10), pd.DOB, 120) as pseudo_lpid, " \
 			"pd.DOB, pd.sex, ac.AccountNumber as ORDERING_ACCT_NUM, ac.accountmailingnamefirstline as ACCOUNT_FACILITY, ac.accountmailingaddressstreet as ACCOUNT_ADDRESS, " \
-			"ac.AccountMailingAddressState as ACCOUNT_ST, ac.AccountMailingAddressZipCode as ACCOUNT_Zip, pd.orderingphysiciannpi as PHYS_NPI, a2.OIDexternal as lpid, r.FillerOrderNo, " \
-			"r.observationdttm as draw_date " \
+			"ac.AccountMailingAddressState as ACCOUNT_ST, ac.AccountMailingAddressZipCode as ACCOUNT_Zip, pd.orderingphysiciannpi as PHYS_NPI, a2.OIDexternal as lpid, " \
+			"a2.lastUpdateTime as lpidUpdateTime, r.FillerOrderNo, r.observationdttm as draw_date, pd.state as patient_st, substring(pd.zipcode,1,5) as patient_zip " \
 			"into #ORD_ACCTS " \
 			"from " \
-			"#EIDS a, " \
-			"[azLAB_Combined].[dbo].[OBR601] r (NOLOCK), " \
-			"[azADT_Combined].[dbo].[PID601] pd (NOLOCK), " \
-			"[azADT_Combined].[dbo].[ACNT601] ac (NOLOCK), " \
-			"[azAEID].[dbo].[AEID203] a1 (NOLOCK), " \
-			"[azAEID].[dbo].[AEID204] a2 (NOLOCK) " \
-			"where a.eid=r.eid and universalserviceid in (%s) and a.eid=pd.eid and pd.Account = ac.AccountNumber and a.eid = a1.EIDforSOID and a1.OID = a2.OID " \
+			"#EIDS a " \
+			"inner join [azLAB_Combined].[dbo].[OBR601] r (NOLOCK) on a.eid=r.eid " \
+			"inner join [azADT_Combined].[dbo].[PID601] pd (NOLOCK) on a.eid=pd.eid " \
+			"inner join [azADT_Combined].[dbo].[ACNT601] ac (NOLOCK) on pd.Account = ac.AccountNumber " \
+			"left outer join [azAEID].[dbo].[AEID203] a1 (NOLOCK) on a.eid = a1.EIDforSOID " \
+			"left outer join [azAEID].[dbo].[AEID204] a2 (NOLOCK) on a1.OID = a2.OID and a2.status <> 8 " \
+			"where universalserviceid in (%s) " \
 			"union all " \
 			"select a.eid, r.universalserviceid, r.universalservicename, upper(ltrim(rtrim(pd.LName))) + upper(ltrim(rtrim(pd.FName))) + convert(VARCHAR(10), pd.DOB,120) as pseudo_lpid, " \
 			"pd.DOB, pd.sex, ac.AccountNumber as ORDERING_ACCT_NUM, ac.accountmailingnamefirstline as ACCOUNT_FACILITY, ac.accountmailingaddressstreet as ACCOUNT_ADDRESS, " \
-			"ac.AccountMailingAddressState as ACCOUNT_ST, ac.AccountMailingAddressZipCode as ACCOUNT_Zip, pd.orderingphysiciannpi as PHYS_NPI, a2.OIDexternal as lpid, r.FillerOrderNo, " \
-			"r.observationdttm as draw_date " \
+			"ac.AccountMailingAddressState as ACCOUNT_ST, ac.AccountMailingAddressZipCode as ACCOUNT_Zip, pd.orderingphysiciannpi as PHYS_NPI, a2.OIDexternal as lpid, " \
+			"a2.lastUpdateTime as lpidUpdateTime, r.FillerOrderNo, r.observationdttm as draw_date, pd.state as patient_st, substring(pd.zipcode,1,5) as patient_zip " \
 			"from " \
-			"#EIDS a, " \
-			"[azPATH_Combined].[dbo].[OBR601] r (NOLOCK), " \
-			"[azADT_Combined].[dbo].[PID601] pd (NOLOCK), " \
-			"[azADT_Combined].[dbo].[ACNT601] ac (NOLOCK), " \
-			"[azAEID].[dbo].[AEID203] a1 (NOLOCK), " \
-			"[azAEID].[dbo].[AEID204] a2 (NOLOCK) " \
-			"where a.eid=r.eid and universalserviceid in (%s) and a.eid=pd.eid and pd.Account = ac.AccountNumber and a.eid = a1.EIDforSOID and a1.OID = a2.OID;" % (modified, modified)
+			"#EIDS a " \
+			"inner join [azPATH_Combined].[dbo].[OBR601] r (NOLOCK) on a.eid=r.eid " \
+			"inner join [azADT_Combined].[dbo].[PID601] pd (NOLOCK) on a.eid=pd.eid " \
+			"inner join [azADT_Combined].[dbo].[ACNT601] ac (NOLOCK) on pd.Account = ac.AccountNumber " \
+			"left outer join [azAEID].[dbo].[AEID203] a1 (NOLOCK) on a.eid = a1.EIDforSOID " \
+			"left outer join [azAEID].[dbo].[AEID204] a2 (NOLOCK) on a1.OID = a2.OID and a2.status <> 8 " \
+			"where universalserviceid in (%s);" % (modified, modified)
 
 	cursor.execute(stmt1)
 
@@ -142,9 +142,9 @@ def collect_data(test_num = [], connection=None, cursor= None, user_oracle= None
 
 	print "TESTS:"
 
-	stmt2 = "SELECT oa.pseudo_lpid, oa.FillerOrderNo, oa.DOB, oa.sex, oa.lpid, oa.phys_npi, oa.ordering_acct_num, oa.account_facility, oa.account_address, oa.account_st, oa.account_zip, " \
-			"p.eid, p.observationdttm as draw_date, p.observresultstatus, p.universalserviceid as order_code, oa.universalservicename as order_name, p.observationid, p.observation, " \
-			"p.units_code, left(replace(replace(replace(p.observationvalue,char(13),''),char(10),''),char(9),''),600) as observationvalue " \
+	stmt2 = "SELECT oa.pseudo_lpid, oa.FillerOrderNo, oa.DOB, oa.sex, oa.lpid, oa.lpidUpdateTime, oa.phys_npi, oa.ordering_acct_num, oa.account_facility, oa.account_address, oa.account_st, oa.account_zip, " \
+			"oa.patient_st, oa.patient_zip, p.eid, p.observationdttm as draw_date, p.observresultstatus, p.universalserviceid as order_code, oa.universalservicename as order_name, p.observationid, " \
+			"p.observation, p.units_code, left(replace(replace(replace(p.observationvalue,char(13),''),char(10),''),char(9),''),600) as observationvalue " \
 			"into #TESTS " \
 			"FROM " \
 			"#EIDS a, " \
@@ -152,9 +152,9 @@ def collect_data(test_num = [], connection=None, cursor= None, user_oracle= None
 			"[azLAB_Combined].[dbo].[OBX601] p (NOLOCK) " \
 			"where a.eid=p.eid and a.eid = oa.eid and p.universalserviceid in (%s) " \
 			"union all " \
-			"SELECT oa.pseudo_lpid, oa.FillerOrderNo, oa.DOB, oa.sex, oa.lpid, oa.phys_npi, oa.ordering_acct_num, oa.account_facility, oa.account_address, oa.account_st, oa.account_zip, " \
-			"p.eid, p.observationdttm as draw_date, p.observresultstatus, p.universalserviceid as order_code, oa.universalservicename as order_name, p.observationid, p.observation, " \
-			"p.units_code, left(replace(replace(replace(p.observationvalue,char(13),''),char(10),''),char(9),''),600) as observationvalue " \
+			"SELECT oa.pseudo_lpid, oa.FillerOrderNo, oa.DOB, oa.sex, oa.lpid, oa.lpidUpdateTime, oa.phys_npi, oa.ordering_acct_num, oa.account_facility, oa.account_address, oa.account_st, oa.account_zip, " \
+			"oa.patient_st, oa.patient_zip, p.eid, p.observationdttm as draw_date, p.observresultstatus, p.universalserviceid as order_code, oa.universalservicename as order_name, p.observationid, " \
+			"p.observation, p.units_code, left(replace(replace(replace(p.observationvalue,char(13),''),char(10),''),char(9),''),600) as observationvalue " \
 			"FROM " \
 			"#EIDS a, " \
 			"#ord_accts oa, " \
@@ -195,8 +195,8 @@ def check_existing_table(ord_accts_table_data, tests_table_data, user=None, pass
 	create_trends_ords_table(trends_demo_tablename, cur, req_num)
 	create_trends_rslts_table(trends_result_tablename, cur1, req_num)
 
-	insert_data_trends_ords_table(ord_accts_table_data, user, passwrd, req_num)
-	insert_data_trends_rslt_table(tests_table_data, user, passwrd, req_num)
+	insert_data_trends_ords_table(ord_accts_table_data, con, cur, req_num)
+	insert_data_trends_rslt_table(tests_table_data, con, cur1, req_num)
 
 	cur1.close()
 	cur.close()
@@ -205,8 +205,8 @@ def check_existing_table(ord_accts_table_data, tests_table_data, user=None, pass
 
 def create_trends_ords_table(trends_demo_tablename, cur, req_num):
 	create_stmt = "CREATE TABLE TRENDS_DEMO_%s (EID VARCHAR2(80),ORDER_CODE VARCHAR2(60),ORDER_NAME VARCHAR2(512),PSEUDO_LPID VARCHAR2(130),DATE_OF_BIRTH DATE,PATIENT_SEX VARCHAR2(50), " \
-				  "ORDERING_ACCT_NUM VARCHAR2(8),ACCOUNT_FACILITY VARCHAR2(30),ACCOUNT_ADDRESS VARCHAR2(35), " \
-				  "ACCOUNT_ST VARCHAR2(2),ACCOUNT_ZIP VARCHAR2(5),NPI_NUM VARCHAR2(50),LPID VARCHAR2(256),FILLERORDERNO VARCHAR2(60),DRAW_DATE DATE)" % req_num
+				  "ORDERING_ACCT_NUM VARCHAR2(8),ACCOUNT_FACILITY VARCHAR2(30),ACCOUNT_ADDRESS VARCHAR2(35),ACCOUNT_ST VARCHAR2(2),ACCOUNT_ZIP VARCHAR2(5),NPI_NUM VARCHAR2(50), " \
+				  "LPID VARCHAR2(256),LPID_UPDATETIME DATE,FILLERORDERNO VARCHAR2(60),DRAW_DATE DATE,PATIENT_ST VARCHAR2(2),PATIENT_ZIP VARCHAR2(5))" % req_num
 
 	drop_stmt = "DROP TABLE TRENDS_DEMO_%s" % req_num
 	
@@ -222,9 +222,10 @@ def create_trends_ords_table(trends_demo_tablename, cur, req_num):
 	print "Table Created"
 
 def create_trends_rslts_table(trends_result_tablename, cur1, req_num):
-	create_stmt1 = "CREATE TABLE TRENDS_RESULTS_%s (PSEUDO_LPID VARCHAR2(130),FILLERORDERNO VARCHAR2(60),DATE_OF_BIRTH DATE,PATIENT_SEX VARCHAR2(50),LPID VARCHAR2(256),NPI_NUM VARCHAR2(50),ORDERING_ACCT_NUM VARCHAR2(8), " \
+	create_stmt1 = "CREATE TABLE TRENDS_RESULTS_%s (PSEUDO_LPID VARCHAR2(130),FILLERORDERNO VARCHAR2(60),DATE_OF_BIRTH DATE,PATIENT_SEX VARCHAR2(50), " \
+				   "LPID VARCHAR2(256),LPID_UPDATETIME DATE,NPI_NUM VARCHAR2(50),ORDERING_ACCT_NUM VARCHAR2(8), " \
 				   "ACCOUNT_FACILITY VARCHAR2(30),ACCOUNT_ADDRESS VARCHAR2(35),ACCOUNT_ST VARCHAR2(2), " \
-				   "ACCOUNT_ZIP VARCHAR2(5),EID VARCHAR2(80),DRAW_DATE DATE,OBSERVRESULTSTATUS VARCHAR2(60), " \
+				   "ACCOUNT_ZIP VARCHAR2(5),PATIENT_ST VARCHAR2(2),PATIENT_ZIP VARCHAR2(5),EID VARCHAR2(80),DRAW_DATE DATE,OBSERVRESULTSTATUS VARCHAR2(60), " \
 				   "ORDER_CODE VARCHAR2(100),ORDER_NAME VARCHAR2(512),TEST_NUMBER VARCHAR2(60),TEST_NAME VARCHAR2(150), " \
 				   "UNITS_CODE VARCHAR2(60),OBSERVATIONVALUE VARCHAR2(3500))" % req_num
 
@@ -241,45 +242,32 @@ def create_trends_rslts_table(trends_result_tablename, cur1, req_num):
 	cur1.execute(grant_stmt1)
 	print "Table Created"
 
-def insert_data_trends_ords_table(ord_accts_table_data, user, passwrd, req_num):
+def insert_data_trends_ords_table(ord_accts_table_data, con, cur, req_num):
 	table = "TRENDS_DEMO_%s" % req_num
-	dsn = 'rtxa1-scan.labcorp.com:1521/lcadwp1.labcorp.com'
-
-	con = cx_Oracle.connect(user=user, password=passwrd, dsn=dsn)
-	cur = con.cursor()
 
 	cur.bindarraysize = len(ord_accts_table_data)
-	cur.setinputsizes(80, 60, 512, 130, 10, 50, 8, 30, 35, 2, 5, 50, 256, 60, 10)
+	cur.setinputsizes(80, 60, 512, 130, 10, 50, 8, 30, 35, 2, 5, 50, 256, 10, 60, 10, 2, 5)
 	cur.executemany(
-		"INSERT INTO "+ table +" (EID, ORDER_CODE, ORDER_NAME, PSEUDO_LPID, DATE_OF_BIRTH, PATIENT_SEX, ORDERING_ACCT_NUM, ACCOUNT_FACILITY, "
-		"ACCOUNT_ADDRESS, ACCOUNT_ST, ACCOUNT_ZIP, NPI_NUM, LPID, FILLERORDERNO, DRAW_DATE) VALUES(:1, :2, :3, :4, :5, :6, :7, :8, :9, :10, :11, :12, :13, :14, :15 )", ord_accts_table_data)
+		"INSERT INTO "+ table +" (EID, ORDER_CODE, ORDER_NAME, PSEUDO_LPID, DATE_OF_BIRTH, PATIENT_SEX, ORDERING_ACCT_NUM, ACCOUNT_FACILITY, " \
+		"ACCOUNT_ADDRESS, ACCOUNT_ST, ACCOUNT_ZIP, NPI_NUM, LPID, LPID_UPDATETIME, FILLERORDERNO, DRAW_DATE, PATIENT_ST, PATIENT_ZIP) " \
+		"VALUES(:1, :2, :3, :4, :5, :6, :7, :8, :9, :10, :11, :12, :13, :14, :15, :16, :17, :18 )", ord_accts_table_data)
 
 	con.commit()
 	print "Ord_accts Inserted"
 
-	cur.close()
-	con.close()
 
-
-def insert_data_trends_rslt_table(tests_table_data, user, passwrd, req_num):
+def insert_data_trends_rslt_table(tests_table_data, con, cur, req_num):
 	table = "TRENDS_RESULTS_%s" % req_num
-	dsn = 'rtxa1-scan.labcorp.com:1521/lcadwp1.labcorp.com'
-
-	con = cx_Oracle.connect(user=user, password=passwrd, dsn=dsn)
-	cur = con.cursor()
-
+	
 	cur.bindarraysize = len(tests_table_data)
-	cur.setinputsizes(130, 60, 10, 50, 256, 50, 8, 30, 35, 2, 5, 80, 10, 60, 100, 512, 60, 150, 60, 3500)
+	cur.setinputsizes(130, 60, 10, 50, 256, 10, 50, 8, 30, 35, 2, 5, 2, 5, 80, 10, 60, 100, 512, 60, 150, 60, 3500)
 	cur.executemany(
-		"INSERT INTO "+ table +" (PSEUDO_LPID, FILLERORDERNO, DATE_OF_BIRTH, PATIENT_SEX, LPID, NPI_NUM, ORDERING_ACCT_NUM, ACCOUNT_FACILITY, ACCOUNT_ADDRESS, ACCOUNT_ST, ACCOUNT_ZIP, EID, "
-		"DRAW_DATE, OBSERVRESULTSTATUS, ORDER_CODE, ORDER_NAME, TEST_NUMBER, TEST_NAME, UNITS_CODE, OBSERVATIONVALUE) "
-		"VALUES(:1, :2, :3, :4, :5, :6, :7, :8, :9, :10, :11, :12, :13, :14, :15, :16, :17, :18, :19, :20 )", tests_table_data)
+		"INSERT INTO "+ table +" (PSEUDO_LPID, FILLERORDERNO, DATE_OF_BIRTH, PATIENT_SEX, LPID, LPID_UPDATETIME, NPI_NUM, ORDERING_ACCT_NUM, ACCOUNT_FACILITY, ACCOUNT_ADDRESS, " \
+		"ACCOUNT_ST, ACCOUNT_ZIP, PATIENT_ST, PATIENT_ZIP, EID, DRAW_DATE, OBSERVRESULTSTATUS, ORDER_CODE, ORDER_NAME, TEST_NUMBER, TEST_NAME, UNITS_CODE, OBSERVATIONVALUE) " \
+		"VALUES(:1, :2, :3, :4, :5, :6, :7, :8, :9, :10, :11, :12, :13, :14, :15, :16, :17, :18, :19, :20, :21, :22, :23 )", tests_table_data)
 
 	con.commit()
 	print "Tests Inserted"
-
-	cur.close()
-	con.close()
 
 
 if __name__ == '__main__':
