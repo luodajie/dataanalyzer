@@ -46,7 +46,7 @@ def check_row_count(user_oracle=None, passwrd=None, req_num=None, test_num=None,
 
 	for d in data:
 		print d
-		if d[1] > 10000:
+		if d[1] > 50000:
 			raise IOError("can't process as the count, %d, is too high for %s" % (d[1], d[0]))
 		else:
 			list3.append(d[0])
@@ -244,13 +244,17 @@ def create_trends_rslts_table(trends_result_tablename, cur1, req_num):
 
 def insert_data_trends_ords_table(ord_accts_table_data, con, cur, req_num):
 	table = "TRENDS_DEMO_%s" % req_num
-
-	cur.bindarraysize = len(ord_accts_table_data)
-	cur.setinputsizes(80, 60, 512, 130, 10, 50, 8, 30, 35, 2, 5, 50, 256, 10, 60, 10, 2, 5)
-	cur.executemany(
-		"INSERT INTO "+ table +" (EID, ORDER_CODE, ORDER_NAME, PSEUDO_LPID, DATE_OF_BIRTH, PATIENT_SEX, ORDERING_ACCT_NUM, ACCOUNT_FACILITY, " \
-		"ACCOUNT_ADDRESS, ACCOUNT_ST, ACCOUNT_ZIP, NPI_NUM, LPID, LPID_UPDATETIME, FILLERORDERNO, DRAW_DATE, PATIENT_ST, PATIENT_ZIP) " \
-		"VALUES(:1, :2, :3, :4, :5, :6, :7, :8, :9, :10, :11, :12, :13, :14, :15, :16, :17, :18 )", ord_accts_table_data)
+	
+	i = 0
+	while i < len(ord_accts_table_data):
+		slice = ord_accts_table_data[i:i+10000]
+		cur.bindarraysize = len(slice)
+		cur.setinputsizes(80, 60, 512, 130, 10, 50, 8, 30, 35, 2, 5, 50, 256, 10, 60, 10, 2, 5)
+		cur.executemany(
+			"INSERT INTO "+ table +" (EID, ORDER_CODE, ORDER_NAME, PSEUDO_LPID, DATE_OF_BIRTH, PATIENT_SEX, ORDERING_ACCT_NUM, ACCOUNT_FACILITY, " \
+			"ACCOUNT_ADDRESS, ACCOUNT_ST, ACCOUNT_ZIP, NPI_NUM, LPID, LPID_UPDATETIME, FILLERORDERNO, DRAW_DATE, PATIENT_ST, PATIENT_ZIP) " \
+			"VALUES(:1, :2, :3, :4, :5, :6, :7, :8, :9, :10, :11, :12, :13, :14, :15, :16, :17, :18 )", slice)
+		i = i + 10000
 
 	con.commit()
 	print "Ord_accts Inserted"
@@ -259,12 +263,16 @@ def insert_data_trends_ords_table(ord_accts_table_data, con, cur, req_num):
 def insert_data_trends_rslt_table(tests_table_data, con, cur, req_num):
 	table = "TRENDS_RESULTS_%s" % req_num
 	
-	cur.bindarraysize = len(tests_table_data)
-	cur.setinputsizes(130, 60, 10, 50, 256, 10, 50, 8, 30, 35, 2, 5, 2, 5, 80, 10, 60, 100, 512, 60, 150, 60, 3500)
-	cur.executemany(
-		"INSERT INTO "+ table +" (PSEUDO_LPID, FILLERORDERNO, DATE_OF_BIRTH, PATIENT_SEX, LPID, LPID_UPDATETIME, NPI_NUM, ORDERING_ACCT_NUM, ACCOUNT_FACILITY, ACCOUNT_ADDRESS, " \
-		"ACCOUNT_ST, ACCOUNT_ZIP, PATIENT_ST, PATIENT_ZIP, EID, DRAW_DATE, OBSERVRESULTSTATUS, ORDER_CODE, ORDER_NAME, TEST_NUMBER, TEST_NAME, UNITS_CODE, OBSERVATIONVALUE) " \
-		"VALUES(:1, :2, :3, :4, :5, :6, :7, :8, :9, :10, :11, :12, :13, :14, :15, :16, :17, :18, :19, :20, :21, :22, :23 )", tests_table_data)
+	i = 0
+	while i < len(tests_table_data):
+		slice = tests_table_data[i:i+10000]
+		cur.bindarraysize = len(slice)
+		cur.setinputsizes(130, 60, 10, 50, 256, 10, 50, 8, 30, 35, 2, 5, 2, 5, 80, 10, 60, 100, 512, 60, 150, 60, 3500)
+		cur.executemany(
+			"INSERT INTO "+ table +" (PSEUDO_LPID, FILLERORDERNO, DATE_OF_BIRTH, PATIENT_SEX, LPID, LPID_UPDATETIME, NPI_NUM, ORDERING_ACCT_NUM, ACCOUNT_FACILITY, ACCOUNT_ADDRESS, " \
+			"ACCOUNT_ST, ACCOUNT_ZIP, PATIENT_ST, PATIENT_ZIP, EID, DRAW_DATE, OBSERVRESULTSTATUS, ORDER_CODE, ORDER_NAME, TEST_NUMBER, TEST_NAME, UNITS_CODE, OBSERVATIONVALUE) " \
+			"VALUES(:1, :2, :3, :4, :5, :6, :7, :8, :9, :10, :11, :12, :13, :14, :15, :16, :17, :18, :19, :20, :21, :22, :23 )", slice)	
+		i = i + 10000
 
 	con.commit()
 	print "Tests Inserted"
