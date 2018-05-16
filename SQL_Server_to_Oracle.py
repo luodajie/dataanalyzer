@@ -3,7 +3,8 @@ import re
 import cx_Oracle
 import pandas as pd
 from PyQt4 import QtGui
-
+import ConfigParser
+from config import dsn_details
 
 def check_row_count(user_oracle=None, passwrd=None, req_num=None, test_num=None, start_date=None, end_date=None):
 	# Microsoft ODBC Driver 13.1
@@ -177,9 +178,8 @@ def collect_data(test_num = [], connection=None, cursor= None, user_oracle= None
 
 
 def check_existing_table(ord_accts_table_data, tests_table_data, user=None, passwrd=None, req_num=None):
-	dsn = 'rtxa1-scan.labcorp.com:1521/lcadwp1.labcorp.com'
 
-	con = cx_Oracle.connect(user=user, password=passwrd, dsn=dsn)
+	con = cx_Oracle.connect(user=user, password=passwrd, dsn=dsn_details())
 	cur = con.cursor()
 	cur1 = con.cursor()
 

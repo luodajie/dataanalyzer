@@ -28,6 +28,7 @@ data_files = [(r'mpl-data', glob.glob(r'C:\Environment\Project\Lib\site-packages
                   (r'mpl-data\stylelib',glob.glob(r'C:\Environment\Project\Lib\site-packages\matplotlib\mpl-data\stylelib\*.*')),
                   (r'mpl-data\fonts',glob.glob(r'C:\Environment\Project\Lib\site-packages\matplotlib\mpl-data\fonts\*.*')),
                   (r'resources',glob.glob(r'C:\LaBCoV\resources\*.*')),
+				  (r'',glob.glob(r'C:\LaBCoV\default_config.cfg')),
 			  # oracle files
 			  (r'Oracle',glob.glob(r'C:\Environment\Project\Lib\site-packages\Oracle\*.*')),
             (r'Oracle\instantclient_11_2',glob.glob(r'C:\Environment\Project\Lib\site-packages\Oracle\instantclient_11_2\*.*')),

@@ -1,13 +1,15 @@
 import cx_Oracle
 from PyQt4 import QtGui
 import pandas as pd
+import ConfigParser
+from config import dsn_details
 
 user = None
 passwrd = None
 
 def testName_fetcher(test_number=None):
-	
-	con = cx_Oracle.connect(user=user, password= passwrd, dsn='rtxa1-scan.labcorp.com:1521/lcadwp1.labcorp.com')
+
+	con = cx_Oracle.connect(user=user, password= passwrd, dsn=dsn_details())
 	cur = con.cursor()
 	lst = []
 
@@ -27,7 +29,7 @@ def testName_fetcher(test_number=None):
 
 def description_fetcher(abbrv_list):
 
-	con = cx_Oracle.connect(user=user, password= passwrd, dsn='rtxa1-scan.labcorp.com:1521/lcadwp1.labcorp.com')
+	con = cx_Oracle.connect(user=user, password= passwrd, dsn=dsn_details())
 	cur = con.cursor()
 	lst = []
 
@@ -50,7 +52,7 @@ def description_fetcher(abbrv_list):
 
 def check_dbCredentials(userid, password):
 	try:
-		con = cx_Oracle.connect(userid, password, dsn='rtxa1-scan.labcorp.com:1521/lcadwp1.labcorp.com')
+		con = cx_Oracle.connect(userid, password, dsn=dsn_details())
 		global user
 		global passwrd
 		user = userid

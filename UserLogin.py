@@ -3,7 +3,7 @@ from StyleSet import form
 import datameer_requests
 import OracleDb
 from Welcome_Gui import Ui_MainWindow
-
+import ConfigParser
 
 
 class User_Widget(QtGui.QMainWindow):
@@ -177,6 +177,10 @@ class User_Widget(QtGui.QMainWindow):
 			else:
 				QtGui.QMessageBox.warning(
 					  self, 'Error', 'Incorrect UserName or Password')
+
+		except ConfigParser.Error as e:
+			QtGui.QMessageBox.critical(
+				self, 'config file error','Check default_config.cfg file:\n {0}'.format(e))
 
 
 	def center(self):
